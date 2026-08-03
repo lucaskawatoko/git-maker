@@ -32,6 +32,7 @@ jobs:
           username: ${{ vars.SAMPLE_USERNAME || 'lucaskawatoko' }}
           data: commits
           color: "#aac8d6"
+          food: "#e5534b"
           output: imgs/samples/snake-commits-azul-calcinha.gif
 
       - name: Commit samples

@@ -142,47 +142,13 @@ def simulate(items: list[dict], rng: random.Random) -> list[dict]:
 
 
 def _build_background(pal) -> Image.Image:
-    rng = random.Random(3)
-    img = Image.new("RGBA", (WIDTH, HEIGHT), pal["bg"] + (255,))
+    img = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
-
-    # Nebulosas: manchas suaves e discretas de cor (estilo espaço)
-    for _ in range(3):
-        cx = rng.randint(0, WIDTH)
-        cy = rng.randint(0, HEIGHT)
-        radius = rng.randint(130, 220)
-        color = pal["primary"] if rng.random() < 0.5 else pal["star"]
-        for k in range(1, 6):
-            rr = int(radius * k / 5)
-            alpha = max(1, 12 - k * 2)
-            draw.ellipse((cx - rr, cy - rr, cx + rr, cy + rr),
-                         fill=color + (alpha,))
-
-    # Estrelas por toda a tela (maioria branca, algumas da cor, raras coloridas)
-    for _ in range(160):
-        x = rng.randint(0, WIDTH - 1)
-        y = rng.randint(0, HEIGHT - 1)
-        alpha = rng.randint(40, 190)
-        r = rng.random()
-        if r < 0.75:
-            color = pal["star"]
-            img.putpixel((x, y), color + (alpha,))
-        elif r < 0.92:
-            color = pal["primary"]
-            img.putpixel((x, y), color + (alpha,))
-        else:
-            color = pal["accent"]
-            draw.ellipse((x - 1, y - 1, x + 1, y + 1), fill=color + (alpha,))
-
-    # Scanlines sutis (estilo retrô, como nos asteroids)
-    for y in range(0, HEIGHT, 3):
-        draw.line([(0, y), (WIDTH, y)], fill=(0, 0, 0, 18))
-
-    # Borda sutil da arena (rounded) no lugar do quadriculado
+    # Apenas a borda da arena (fundo 100% transparente)
     x0, y0 = GRID_X - 8, GRID_Y - 8
     x1, y1 = GRID_X + COLS * CELL + 8, GRID_Y + ROWS * CELL + 8
     draw.rounded_rectangle((x0, y0, x1, y1), radius=12,
-                           outline=pal["grid"] + (90,), width=1)
+                           outline=(150, 160, 180, 255), width=1)
     return img
 
 
@@ -214,7 +180,7 @@ def _draw_food(draw: ImageDraw.ImageDraw, pal, food: tuple[int, int],
 def _draw_snake(draw: ImageDraw.ImageDraw, pal, body: list[tuple[int, int]]) -> None:
     for i in range(len(body) - 1, 0, -1):
         draw.rounded_rectangle(_cell_rect(body[i]), radius=6,
-                               fill=pal["primary"] + (230,))
+                               fill=pal["primary"] + (255,))
     draw.rounded_rectangle(_cell_rect(body[0]), radius=6,
                            fill=pal["secondary"] + (255,))
 
@@ -242,7 +208,7 @@ def _draw_intro(draw: ImageDraw.ImageDraw, pal, i: int, data_name: str,
     draw.text(((WIDTH - tw) / 2, 10), title, font=font_l, fill=pal["accent"] + (255,))
     sub = SUBTITLES[data_name]
     sw = draw.textlength(sub, font=font_s)
-    draw.text(((WIDTH - sw) / 2, 36), sub, font=font_s, fill=pal["primary"] + (200,))
+    draw.text(((WIDTH - sw) / 2, 36), sub, font=font_s, fill=pal["primary"] + (255,))
 
 
 def render(ctx: RenderContext) -> None:
@@ -279,12 +245,11 @@ def render(ctx: RenderContext) -> None:
             draw.text(((WIDTH - tw) / 2, HEIGHT - 30), msg, font=font_l,
                       fill=ctx.palette["accent"] + (255,))
 
-        frame = Image.alpha_composite(frame, overlay).convert("RGB")
+        frame = Image.alpha_composite(frame, overlay)
 
         if i >= TOTAL - OUTRO:
-            t = (i - (TOTAL - OUTRO)) / OUTRO
-            black = Image.new("RGB", (WIDTH, HEIGHT), (0, 0, 0))
-            frame = Image.blend(frame, black, min(1.0, t * 1.05))
+            t = min(1.0, (i - (TOTAL - OUTRO)) / OUTRO)
+            frame.putalpha(int(255 * (1 - t)))
 
         frames.append(frame)
 

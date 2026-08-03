@@ -3,7 +3,7 @@
 
 Uso:
     python -m generator [--user USUARIO] [--data repos|commits]
-                        [--color HEX] [--background HEX] [--food HEX]
+                        [--color HEX] [--food HEX]
                         [--output PATH] [--mock] [--preview]
 """
 
@@ -47,8 +47,6 @@ def main(argv: list[str] | None = None) -> int:
                         help="dados que viram comida da cobrinha")
     parser.add_argument("--color", default=DEFAULT_COLOR,
                         help="cor da cobrinha em hex (padrão: #3fb950)")
-    parser.add_argument("--background", default=None,
-                        help="cor de fundo em hex (padrão: derivada da cor)")
     parser.add_argument("--food", default=None,
                         help="cor da comida em hex (padrão: #ff6b4a)")
     parser.add_argument("--output", default=DEFAULT_OUTPUT)
@@ -61,7 +59,7 @@ def main(argv: list[str] | None = None) -> int:
     token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
     username = args.user or os.environ.get("GH_USER") or DEFAULT_USER
     items = _load_items(args, username, token)
-    palette = build_palette(args.color, args.background, args.food)
+    palette = build_palette(args.color, args.food)
 
     ctx = RenderContext(
         output=args.output,

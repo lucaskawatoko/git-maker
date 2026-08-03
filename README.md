@@ -2,8 +2,9 @@
 
 Gera o GIF da **cobrinha** comendo os seus dados do GitHub (repositórios ou
 contribuições), igualzinho ao famoso snake de contribuição — mas **totalmente
-personalizável**: cor da cobrinha, fundo e comida em qualquer hex. Tudo
-**dentro do GitHub Actions** — sem servidor, sem hosting.
+personalizável**: cor da cobrinha e da comida em qualquer hex, com **fundo
+transparente** (o GIF se adapta ao tema do seu README). Tudo **dentro do
+GitHub Actions** — sem servidor, sem hosting.
 
 ## Como usar
 
@@ -34,7 +35,6 @@ jobs:
           username: "lucaskawatoko"  # seu usuário
           data: "repos"              # repos ou commits
           color: "#aac8d6"           # cor da cobrinha (hex)
-          background: "#0d1117"      # cor de fundo (hex)
           food: "#e5534b"            # cor da comida (hex)
 
       - name: Commit
@@ -58,21 +58,22 @@ Depois é só referenciar no seu README:
 
 ## Inputs
 
-| Input        | Padrão                 | Descrição                                            |
-| ------------ | ---------------------- | ---------------------------------------------------- |
-| `username`   | `lucaskawatoko`        | Usuário do GitHub com os dados                       |
-| `data`       | `repos`                | Comida da cobrinha: `repos` ou `commits`             |
-| `color`      | `#3fb950`              | Cor da cobrinha em hex (`#rrggbb`)                   |
-| `background` | *(derivada da cor)*    | Cor de fundo em hex. Vazio deriva da cor da cobrinha |
-| `food`       | `#ff6b4a`              | Cor da comida em hex                                 |
-| `output`     | `imgs/contribution-animation.gif` | Caminho do GIF gerado                    |
+| Input      | Padrão                 | Descrição                                            |
+| ---------- | ---------------------- | ---------------------------------------------------- |
+| `username` | `lucaskawatoko`        | Usuário do GitHub com os dados                       |
+| `data`     | `repos`                | Comida da cobrinha: `repos` ou `commits`             |
+| `color`    | `#3fb950`              | Cor da cobrinha em hex (`#rrggbb`)                   |
+| `food`     | `#ff6b4a`              | Cor da comida em hex                                 |
+| `output`   | `imgs/contribution-animation.gif` | Caminho do GIF gerado                    |
+
+> O fundo é **transparente** — o GIF usa o fundo do seu README (claro ou
+> escuro). A única moldura é a borda da arena.
 
 ## Cores personalizadas
 
-Qualquer cor em hex funciona. A paleta (fundo, grade, estrelas, cabeça) é
-derivada automaticamente da `color` escolhida para manter contraste — uma cor
-clara como `#aac8d6` (azul calcinha) ganha cabeça mais escura, uma cor escura
-ganha cabeça mais clara.
+Qualquer cor em hex funciona. A cabeça é derivada automaticamente da `color`
+escolhida para manter contraste — uma cor clara como `#aac8d6` (azul
+calcinha) ganha cabeça mais escura, uma cor escura ganha cabeça mais clara.
 
 Sugestões de hex:
 
@@ -98,7 +99,7 @@ python -m generator --user lucaskawatoko
 
 # cobrinha azul calcinha comendo contribuições
 python -m generator --user lucaskawatoko --data commits \
-  --color "#aac8d6" --background "#0d1117" --food "#e5534b"
+  --color "#aac8d6" --food "#e5534b"
 ```
 
 ## Licença

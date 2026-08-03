@@ -1,9 +1,9 @@
 name: "Generate GitHub snake GIF"
 description: >-
   Gera o GIF da cobrinha comendo os dados do GitHub (repositórios ou
-  contribuições). Cor da cobrinha, fundo e comida personalizáveis por hex.
-  Sem servidor: roda direto no GitHub Actions e commita o GIF no seu
-  repositório.
+  contribuições). Cor da cobrinha e da comida personalizáveis por hex, fundo
+  transparente. Sem servidor: roda direto no GitHub Actions e commita o GIF no
+  seu repositório.
 
 inputs:
   username:
@@ -18,10 +18,6 @@ inputs:
     description: "Cor da cobrinha em hex (#rrggbb), ex: #aac8d6 (azul calcinha)."
     required: false
     default: "#3fb950"
-  background:
-    description: "Cor de fundo em hex (#rrggbb). Vazio deriva da cor da cobrinha."
-    required: false
-    default: ""
   food:
     description: "Cor da comida em hex (#rrggbb). Vazio usa o padrão #ff6b4a."
     required: false
@@ -55,14 +51,12 @@ runs:
           --user "$INPUT_USERNAME" \
           --data "$INPUT_DATA" \
           --color "$INPUT_COLOR" \
-          --background "$INPUT_BACKGROUND" \
           --food "$INPUT_FOOD" \
           --output "$INPUT_OUTPUT"
       env:
         INPUT_USERNAME: ${{ inputs.username }}
         INPUT_DATA: ${{ inputs.data }}
         INPUT_COLOR: ${{ inputs.color }}
-        INPUT_BACKGROUND: ${{ inputs.background }}
         INPUT_FOOD: ${{ inputs.food }}
         INPUT_OUTPUT: ${{ inputs.output }}
       shell: bash

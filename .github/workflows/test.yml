@@ -27,7 +27,7 @@ jobs:
       - name: Render snake with custom hex colors
         run: |
           python -m generator --data commits --mock \
-            --color "#aac8d6" --background "#0d1117" --food "#e5534b" \
+            --color "#aac8d6" --food "#e5534b" \
             --output "/tmp/snake-azul.gif"
           test -s "/tmp/snake-azul.gif"
           echo "OK snake (hex)"

@@ -6,11 +6,11 @@ Obrigado por ajudar o git-maker! Projeto propositalmente enxuto.
 
 ```
 generator/
-  main.py            # CLI: --user --data --color --background --food --output --mock --preview
+  main.py            # CLI: --user --data --color --food --output --mock --preview
   api.py             # busca de repositórios (REST) / contribuições (GraphQL) + dados fictícios
-  palettes.py        # deriva a paleta a partir de cores hex arbitrárias
+  palettes.py        # deriva a paleta (cobra, comida) a partir de cores hex
   snake.py           # o jogo: cobrinha auto-play (BFS) comendo os dados
-  render.py          # utilidades: fontes e gravação do GIF
+  render.py          # utilidades: fontes e gravação do GIF (com transparência)
   render_context.py  # contexto compartilhado entre camadas
 ```
 
@@ -19,8 +19,11 @@ generator/
 - Cada item (repositório ou semana de contribuição) vira uma comida na grade.
 - A cobrinha é auto-play: `find_path` usa BFS para ir até a comida; o `count`
   de cada item soma no SCORE.
-- A paleta é derivada da `color` (hex) em `palettes.build_palette`, com fundo
-  (`background`) e comida (`food`) sobreponíveis.
+- A cobrinha **cresce** a cada comida (`pending += 1` no `simulate`).
+- O fundo é **transparente** (RGBA); só a borda da arena é desenhada. O GIF é
+  salvo com índice de transparência (`render.save_gif` converte RGBA → P).
+- A paleta é derivada da `color` (hex) em `palettes.build_palette`, com a cor
+  da comida (`food`) sobreponível.
 - `MAX_ITEMS = 25` limita a comida para o GIF ficar leve.
 
 ## Validar

@@ -17,6 +17,10 @@ inputs:
     description: "Dados: repos, commits (contribuições) ou followers."
     required: false
     default: "repos"
+  limit:
+    description: "Quantidade máxima de cometas/comida (top N por relevância)."
+    required: false
+    default: "15"
   color:
     description: "Paleta: cyan, pink, green, orange, purple, blue ou uma cor hex (#rrggbb)."
     required: false
@@ -58,6 +62,7 @@ runs:
           --user "$INPUT_USERNAME" \
           --style "$INPUT_STYLE" \
           --data "$INPUT_DATA" \
+          --limit "$INPUT_LIMIT" \
           --color "$INPUT_COLOR" \
           $AVATAR_ARG \
           --output "$INPUT_OUTPUT"
@@ -65,6 +70,7 @@ runs:
         INPUT_USERNAME: ${{ inputs.username }}
         INPUT_STYLE: ${{ inputs.style }}
         INPUT_DATA: ${{ inputs.data }}
+        INPUT_LIMIT: ${{ inputs.limit }}
         INPUT_COLOR: ${{ inputs.color }}
         INPUT_AVATAR: ${{ inputs.avatar }}
         INPUT_OUTPUT: ${{ inputs.output }}

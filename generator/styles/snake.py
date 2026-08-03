@@ -25,7 +25,6 @@ OUTRO = 14
 FPS = 24
 MAX_STEPS = 80
 MAX_TOTAL = 900
-MAX_ITEMS = 25  # limita a quantidade de alimentos para manter o GIF leve
 
 TITLES = {
     "repos": "ASTRO SNAKE",
@@ -235,9 +234,7 @@ def _draw_intro(draw: ImageDraw.ImageDraw, pal, i: int, data_name: str,
 def render(ctx: RenderContext) -> None:
     ctx.width, ctx.height = WIDTH, HEIGHT
     rng = random.Random(3)
-    items = ctx.items[:MAX_ITEMS] if ctx.items else ctx.items
-    if not items:
-        items = [{"name": "sem dados", "count": 0, "level": 1}]
+    items = ctx.items or [{"name": "sem dados", "count": 0, "level": 1}]
 
     background = _build_background(ctx.palette)
     states = simulate(items, rng)

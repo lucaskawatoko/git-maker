@@ -70,7 +70,9 @@ Depois é só referenciar no seu README:
 
 > `data: commits` lê o calendário de contribuições do usuário. `repos` e
 > `followers` usam a API pública, sem token. Tudo funciona com o token padrão
-> do GitHub Actions.
+> do GitHub Actions. `limit` mostra só o top N por relevância (tamanho de repo,
+> contribuições da semana, etc.) — assim o jogo fica limpo mesmo se a fonte
+> tiver dezenas de itens.
 
 ## Inputs
 
@@ -79,6 +81,7 @@ Depois é só referenciar no seu README:
 | `username` | `lucaskawatoko`            | Usuário do GitHub com os dados                          |
 | `style`    | `asteroids`                | `asteroids` ou `snake`                                  |
 | `data`     | `repos`                    | `repos`, `commits` ou `followers`                       |
+| `limit`    | `15`                       | Quantidade máxima de cometas/comida (top N por relevância) |
 | `color`    | `cyan`                     | Preset (`cyan|pink|green|orange|purple|blue`) ou hex    |
 | `avatar`   | `false`                    | `true`/`false` — avatar na animação                     |
 | `output`   | `imgs/contribution-animation.gif` | Caminho do GIF gerado                            |
@@ -101,6 +104,9 @@ python -m generator --user lucaskawatoko --style snake --data repos --color purp
 
 # contribuições exigem um token
 GH_TOKEN=seu_token python -m generator --user lucaskawatoko --data commits
+
+# controle a quantidade de cometas/comida (top N por relevância)
+python -m generator --user lucaskawatoko --style asteroids --data commits --limit 12
 ```
 
 O gerador é um pacote Python simples em `generator/`, sem dependências além do

@@ -61,6 +61,8 @@ def main(argv: list[str] | None = None) -> int:
                         help="estilo da animação")
     parser.add_argument("--data", choices=DATA_CHOICES, default="repos",
                         help="dados a transformar em cometas/comida")
+    parser.add_argument("--limit", type=int, default=15,
+                        help="quantidade máxima de cometas/comida (top N por relevância)")
     parser.add_argument("--color", default="cyan",
                         help="paleta preset (cyan|pink|green|orange|purple|blue) ou hex")
     parser.add_argument("--avatar", action="store_true",
@@ -74,7 +76,9 @@ def main(argv: list[str] | None = None) -> int:
 
     token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
     username = args.user or os.environ.get("GH_USER") or DEFAULT_USER
-    items = _load_items(args, username, token)
+    raw_items = _load_items(args, username, token)
+    total = len(raw_items)
+    items = raw_items[:max(1, args.limit)]
     palette = build_palette(args.color)
     av = _load_avatar(args, username)
 
@@ -89,8 +93,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     STYLES[args.style](ctx)
     size = os.path.getsize(args.output) / 1024
+    shown = f" ({len(items)} de {total} itens)" if total > len(items) else ""
     print(f"GIF gerado em {args.output} ({size:.0f} KB, {ctx.width}x{ctx.height}) "
-          f"para @{username} ({len(items)} itens)")
+          f"para @{username} ({len(items)} cometas{shown})")
     return 0
 
 

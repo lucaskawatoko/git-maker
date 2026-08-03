@@ -1,0 +1,69 @@
+name: samples
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "generator/**"
+      - ".github/actions/**"
+      - ".github/workflows/samples.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { style: asteroids, data: repos,     color: cyan }
+          - { style: asteroids, data: repos,     color: pink }
+          - { style: asteroids, data: commits,   color: cyan }
+          - { style: asteroids, data: followers, color: cyan }
+          - { style: snake,     data: repos,     color: cyan }
+          - { style: snake,     data: commits,   color: cyan }
+          - { style: snake,     data: followers, color: cyan }
+          - { style: snake,     data: repos,     color: purple }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate sample GIF
+        uses: ./.github/actions/generate-gifs
+        with:
+          username: ${{ vars.SAMPLE_USERNAME || 'lucaskawatoko' }}
+          style: ${{ matrix.style }}
+          data: ${{ matrix.data }}
+          color: ${{ matrix.color }}
+          avatar: "true"
+          output: imgs/samples/${{ matrix.style }}-${{ matrix.data }}-${{ matrix.color }}.gif
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.style }}-${{ matrix.data }}-${{ matrix.color }}
+          path: imgs/samples/${{ matrix.style }}-${{ matrix.data }}-${{ matrix.color }}.gif
+
+  commit:
+    needs: generate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download all GIFs
+        uses: actions/download-artifact@v4
+        with:
+          path: imgs/samples
+          merge-multiple: true
+      - name: Commit samples
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add imgs/samples
+          git diff --cached --quiet && echo "sem mudanças" || {
+            git commit -m "chore: atualiza galeria de exemplos"
+            git push
+          }

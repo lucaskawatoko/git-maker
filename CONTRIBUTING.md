@@ -51,5 +51,6 @@ estilo×dado com `--mock` nas versões 3.9, 3.11 e 3.12 do Python.
 - Fuso padrão `America/Sao_Paulo`, textos em pt-br.
 - Sem dependências além do Pillow — Python 3.9+ (`from __future__ import
   annotations` para tipos modernos).
-- GIFs devem ficar leves: em estilos com muitos itens, limite a quantidade
-  (veja `MAX_ITEMS` no snake) e garanta terminação com limites de passos.
+- GIFs devem ficar leves: em estilos com muitos itens, garanta terminação com
+  limites de passos (veja `MAX_TOTAL`/`MAX_STEPS` no snake). No Asteroids os
+  cometas aparecem um por vez (sequência `INTRO + i * CYCLE`).

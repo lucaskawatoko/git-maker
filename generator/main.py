@@ -61,8 +61,8 @@ def main(argv: list[str] | None = None) -> int:
                         help="estilo da animação")
     parser.add_argument("--data", choices=DATA_CHOICES, default="repos",
                         help="dados a transformar em cometas/comida")
-    parser.add_argument("--limit", type=int, default=15,
-                        help="quantidade máxima de cometas/comida (top N por relevância)")
+    parser.add_argument("--limit", type=int, default=0,
+                        help="máximo de cometas/comida (0 = todos, um por vez no jogo)")
     parser.add_argument("--color", default="cyan",
                         help="paleta preset (cyan|pink|green|orange|purple|blue) ou hex")
     parser.add_argument("--avatar", action="store_true",
@@ -78,7 +78,8 @@ def main(argv: list[str] | None = None) -> int:
     username = args.user or os.environ.get("GH_USER") or DEFAULT_USER
     raw_items = _load_items(args, username, token)
     total = len(raw_items)
-    items = raw_items[:max(1, args.limit)]
+    limit = args.limit if args.limit and args.limit > 0 else total
+    items = raw_items[:limit]
     palette = build_palette(args.color)
     av = _load_avatar(args, username)
 

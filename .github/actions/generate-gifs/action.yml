@@ -18,9 +18,9 @@ inputs:
     required: false
     default: "repos"
   limit:
-    description: "Quantidade máxima de cometas/comida (top N por relevância)."
+    description: "Máximo de cometas (0 = todos, um por vez no jogo)."
     required: false
-    default: "15"
+    default: "0"
   color:
     description: "Paleta: cyan, pink, green, orange, purple, blue ou uma cor hex (#rrggbb)."
     required: false

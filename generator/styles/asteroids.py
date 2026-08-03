@@ -20,14 +20,16 @@ CY = HEIGHT // 2
 
 R0 = 196
 RH_BASE = 64
-TRAVEL = 40
-EXPLOSION_MS = 12
+TRAVEL = 18          # frames de aproximação de cada cometa
+EXPLOSION_MS = 6     # frames de explosão
+GAP = 3              # pausa entre a explosão e o próximo cometa
+DECIMATE = 2         # render a cada 2 sim frames => ~12fps de saída (GIF leve)
 
 FPS = 24
 INTRO = 18
 OUTRO = 14
-TARGET_TOTAL = 210
-FIRING_SPAN = TARGET_TOTAL - INTRO - OUTRO - TRAVEL - EXPLOSION_MS
+# Um cometa por vez: cada ciclo = aproximação + explosão + pausa.
+CYCLE = TRAVEL + EXPLOSION_MS + GAP
 
 TITLES = {
     "repos": "ASTRO REPOS",
@@ -179,8 +181,6 @@ def draw_hud(frame: Image.Image, pal, score: int, total: int, target_name: str |
 
 def build_comets(items: list[dict]) -> list[dict]:
     rng = random.Random(7)
-    n = len(items)
-    gap = max(1.0, FIRING_SPAN / max(1, n - 1)) if n > 1 else 0.0
     comets = []
     for i, item in enumerate(items):
         theta = rng.uniform(0, 2 * math.pi)
@@ -189,7 +189,7 @@ def build_comets(items: list[dict]) -> list[dict]:
             "name": item["name"],
             "level": item["level"],
             "avatar": i == 0,  # cometa principal (maior) recebe o avatar
-            "ts": INTRO + i * gap,
+            "ts": INTRO + i * CYCLE,  # um por vez, em sequência
             "theta": theta,
             "rh": rh,
             "speed": (R0 - rh) / TRAVEL,
@@ -222,6 +222,8 @@ def render(ctx: RenderContext) -> None:
 
     cur_angle = -math.pi / 2
     for i in range(TOTAL):
+        if i % DECIMATE:
+            continue
         frame = background.copy()
         overlay = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
 
@@ -273,4 +275,4 @@ def render(ctx: RenderContext) -> None:
 
         frames.append(frame)
 
-    save_gif(frames, ctx.output, ctx.fps, ctx.preview)
+    save_gif(frames, ctx.output, max(1, ctx.fps // DECIMATE), ctx.preview)

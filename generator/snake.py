@@ -187,15 +187,30 @@ def _draw_snake(draw: ImageDraw.ImageDraw, pal, body: list[tuple[int, int]]) -> 
 
 def _draw_hud(draw: ImageDraw.ImageDraw, pal, state: dict, total: int,
               score_font, big_font) -> None:
-    draw.text((24, 14), "SCORE", font=score_font, fill=(150, 160, 180, 255))
-    draw.text((24, 34), f"{state['score']:04d}", font=big_font,
+    pad = 10
+    outline = (150, 160, 180, 255)
+
+    score_label = "SCORE"
+    score_number = f"{state['score']:04d}"
+    box_w = max(draw.textlength(score_label, font=score_font),
+                draw.textlength(score_number, font=big_font)) + 2 * pad
+    x0, y0 = GRID_X + 8, GRID_Y + 8
+    x1, y1 = x0 + box_w, y0 + 52
+    draw.rounded_rectangle((x0, y0, x1, y1), radius=8, outline=outline, width=1)
+    draw.text((x0 + pad, y0 + 6), score_label, font=score_font, fill=outline)
+    draw.text((x0 + pad, y0 + 26), score_number, font=big_font,
               fill=pal["secondary"] + (255,))
+
     label = HUD_LABELS[state["data_name"]]
     sub = f"{label}: {state['eaten']}/{total}"
     if state["data_name"] == "commits":
         sub = f"{label}: {state['score']}"
-    tw = draw.textlength(sub, font=score_font)
-    draw.text((WIDTH - 24 - tw, 14), sub, font=score_font,
+    sub_w = draw.textlength(sub, font=score_font)
+    x0b = GRID_X + COLS * CELL - 8 - sub_w - 2 * pad
+    y0b = GRID_Y + 8
+    draw.rounded_rectangle((x0b, y0b, GRID_X + COLS * CELL - 8, y0b + 28),
+                           radius=8, outline=outline, width=1)
+    draw.text((x0b + pad, y0b + 6), sub, font=score_font,
               fill=pal["primary"] + (255,))
 
 
@@ -205,10 +220,11 @@ def _draw_intro(draw: ImageDraw.ImageDraw, pal, i: int, data_name: str,
         return
     title = TITLES[data_name]
     tw = draw.textlength(title, font=font_l)
-    draw.text(((WIDTH - tw) / 2, 10), title, font=font_l, fill=pal["accent"] + (255,))
+    draw.text(((WIDTH - tw) / 2, 8), title, font=font_l, fill=pal["accent"] + (255,))
     sub = SUBTITLES[data_name]
     sw = draw.textlength(sub, font=font_s)
-    draw.text(((WIDTH - sw) / 2, 36), sub, font=font_s, fill=pal["primary"] + (255,))
+    draw.text(((WIDTH - sw) / 2, GRID_Y + 12), sub, font=font_s,
+              fill=pal["primary"] + (255,))
 
 
 def render(ctx: RenderContext) -> None:

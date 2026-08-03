@@ -25,16 +25,26 @@ def rank_items(items: list[dict]) -> list[dict]:
 
 
 def fetch_repos(username: str) -> list[dict]:
-    """Repositórios públicos do usuário via REST (sem token)."""
-    url = f"https://api.github.com/users/{username}/repos?per_page=100&type=owner&sort=updated"
-    try:
-        nodes = _get_json(url)
-    except Exception as exc:  # noqa: BLE001
-        raise SystemExit(f"Falha ao buscar repositórios de @{username}: {exc}") from exc
-    if isinstance(nodes, dict) and nodes.get("message"):
-        raise SystemExit(f"Erro da API GitHub: {nodes['message']}")
-    items = [{"name": n.get("name", ""), "count": n.get("size", 0) or 0} for n in nodes]
-    return rank_items(items)
+    """Repositórios públicos do usuário via REST (sem token), paginado."""
+    items: list[dict] = []
+    page = 1
+    while page <= 10:
+        url = (f"https://api.github.com/users/{username}/repos"
+               f"?per_page=100&page={page}&type=owner&sort=updated")
+        try:
+            nodes = _get_json(url)
+        except Exception as exc:  # noqa: BLE001
+            raise SystemExit(f"Falha ao buscar repositórios de @{username}: {exc}") from exc
+        if isinstance(nodes, dict) and nodes.get("message"):
+            raise SystemExit(f"Erro da API GitHub: {nodes['message']}")
+        if not nodes:
+            break
+        items.extend(nodes)
+        if len(nodes) < 100:
+            break
+        page += 1
+    repos = [{"name": n.get("name", ""), "count": n.get("size", 0) or 0} for n in items]
+    return rank_items(repos)
 
 
 def fetch_commits(username: str, token: str) -> list[dict]:

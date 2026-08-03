@@ -120,6 +120,7 @@ def simulate(items: list[dict], rng: random.Random) -> list[dict]:
             eaten += 1
             score += items[idx]["count"]
             idx += 1
+            pending += 1  # cresce a cada comida
             stuck = 0
             if idx < len(items):
                 food = _spawn_food(rng, set(body))
@@ -144,14 +145,44 @@ def _build_background(pal) -> Image.Image:
     rng = random.Random(3)
     img = Image.new("RGBA", (WIDTH, HEIGHT), pal["bg"] + (255,))
     draw = ImageDraw.Draw(img)
-    for x in range(GRID_X, GRID_X + COLS * CELL + 1, CELL):
-        draw.line([(x, GRID_Y), (x, GRID_Y + ROWS * CELL)], fill=pal["grid"] + (70,))
-    for y in range(GRID_Y, GRID_Y + ROWS * CELL + 1, CELL):
-        draw.line([(GRID_X, y), (GRID_X + COLS * CELL, y)], fill=pal["grid"] + (70,))
-    for _ in range(70):
+
+    # Nebulosas: manchas suaves e discretas de cor (estilo espaço)
+    for _ in range(3):
+        cx = rng.randint(0, WIDTH)
+        cy = rng.randint(0, HEIGHT)
+        radius = rng.randint(130, 220)
+        color = pal["primary"] if rng.random() < 0.5 else pal["star"]
+        for k in range(1, 6):
+            rr = int(radius * k / 5)
+            alpha = max(1, 12 - k * 2)
+            draw.ellipse((cx - rr, cy - rr, cx + rr, cy + rr),
+                         fill=color + (alpha,))
+
+    # Estrelas por toda a tela (maioria branca, algumas da cor, raras coloridas)
+    for _ in range(160):
         x = rng.randint(0, WIDTH - 1)
-        y = rng.randint(0, GRID_Y - 5)
-        img.putpixel((x, y), pal["star"] + (rng.randint(40, 140),))
+        y = rng.randint(0, HEIGHT - 1)
+        alpha = rng.randint(40, 190)
+        r = rng.random()
+        if r < 0.75:
+            color = pal["star"]
+            img.putpixel((x, y), color + (alpha,))
+        elif r < 0.92:
+            color = pal["primary"]
+            img.putpixel((x, y), color + (alpha,))
+        else:
+            color = pal["accent"]
+            draw.ellipse((x - 1, y - 1, x + 1, y + 1), fill=color + (alpha,))
+
+    # Scanlines sutis (estilo retrô, como nos asteroids)
+    for y in range(0, HEIGHT, 3):
+        draw.line([(0, y), (WIDTH, y)], fill=(0, 0, 0, 18))
+
+    # Borda sutil da arena (rounded) no lugar do quadriculado
+    x0, y0 = GRID_X - 8, GRID_Y - 8
+    x1, y1 = GRID_X + COLS * CELL + 8, GRID_Y + ROWS * CELL + 8
+    draw.rounded_rectangle((x0, y0, x1, y1), radius=12,
+                           outline=pal["grid"] + (90,), width=1)
     return img
 
 

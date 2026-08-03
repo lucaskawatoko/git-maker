@@ -18,9 +18,16 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Install dependencies
         run: pip install -r requirements.txt
-      - name: Render GIF with mock data
+      - name: Render snake GIF with mock data
         run: |
-          python -m generator --user lucaskawatoko --mock --preview \
-            --output "/tmp/asteroids.gif"
-          test -s "/tmp/asteroids.gif"
-          echo "OK asteroids"
+          python -m generator --data repos --mock --preview \
+            --output "/tmp/snake.gif"
+          test -s "/tmp/snake.gif"
+          echo "OK snake (repos)"
+      - name: Render snake with custom hex colors
+        run: |
+          python -m generator --data commits --mock \
+            --color "#aac8d6" --background "#0d1117" --food "#e5534b" \
+            --output "/tmp/snake-azul.gif"
+          test -s "/tmp/snake-azul.gif"
+          echo "OK snake (hex)"

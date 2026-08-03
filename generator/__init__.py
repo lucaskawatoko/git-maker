@@ -1,3 +1,3 @@
-"""github-gif-maker: GIF Asteroids que atira nos repositórios públicos do usuário."""
+"""git-maker: GIF da cobrinha comendo os dados do GitHub."""
 
-__version__ = "1.0.0"
+__version__ = "2.0.0"

@@ -1,24 +1,27 @@
 # Contribuindo
 
-Obrigado por ajudar o github-gif-maker! Projeto propositalmente enxuto.
+Obrigado por ajudar o git-maker! Projeto propositalmente enxuto.
 
 ## Estrutura
 
 ```
 generator/
-  main.py        # CLI: --user --limit --output --mock --preview
-  api.py         # busca de repositórios públicos (REST) + dados fictícios
-  asteroids.py   # o jogo: nave atira nos repositórios, um cometa por vez
-  render.py      # utilidades: fontes e gravação do GIF
+  main.py            # CLI: --user --data --color --background --food --output --mock --preview
+  api.py             # busca de repositórios (REST) / contribuições (GraphQL) + dados fictícios
+  palettes.py        # deriva a paleta a partir de cores hex arbitrárias
+  snake.py           # o jogo: cobrinha auto-play (BFS) comendo os dados
+  render.py          # utilidades: fontes e gravação do GIF
+  render_context.py  # contexto compartilhado entre camadas
 ```
 
 ## Como o jogo funciona
 
-- Cada repositório vira um cometa; cometas maiores = repositórios maiores
-  (tamanho em KB, por ranking) com nível 1-4.
-- Os cometas aparecem **um por vez** (`ts = INTRO + i * CYCLE`, em que
-  `CYCLE = TRAVEL + EXPLOSION_MS + GAP`), sequencialmente.
-- A saída é decimada (`DECIMATE = 2`) para ~12fps, mantendo o GIF leve.
+- Cada item (repositório ou semana de contribuição) vira uma comida na grade.
+- A cobrinha é auto-play: `find_path` usa BFS para ir até a comida; o `count`
+  de cada item soma no SCORE.
+- A paleta é derivada da `color` (hex) em `palettes.build_palette`, com fundo
+  (`background`) e comida (`food`) sobreponíveis.
+- `MAX_ITEMS = 25` limita a comida para o GIF ficar leve.
 
 ## Validar
 
@@ -26,12 +29,12 @@ generator/
 python -m generator --mock --preview
 ```
 
-Testes de CI (`.github/workflows/test.yml`) renderizam o GIF com dados
-fictícios nas versões 3.9, 3.11 e 3.12 do Python.
+Testes de CI (`.github/workflows/test.yml`) renderizam a cobrinha com dados
+fictícios nas versões 3.9, 3.11 e 3.12 do Python, incluindo cores hex.
 
 ## Convenções
 
 - Fuso padrão `America/Sao_Paulo`, textos em pt-br.
 - Sem dependências além do Pillow — Python 3.9+ (`from __future__ import
   annotations` para tipos modernos).
-- GIFs devem ficar leves (o alvo é ~2MB para 15 cometas).
+- GIFs devem ficar leves (o alvo é ~2MB).

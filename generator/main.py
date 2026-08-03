@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""CLI do github-gif-maker: gera o GIF Asteroids atirando nos repositórios
-públicos do usuário (um cometa por vez).
+"""CLI do git-maker: gera o GIF da cobrinha comendo os dados do GitHub.
 
 Uso:
-    python -m generator [--user USUARIO] [--limit N] [--mock] [--preview] [--output PATH]
+    python -m generator [--user USUARIO] [--data repos|commits]
+                        [--color HEX] [--background HEX] [--food HEX]
+                        [--output PATH] [--mock] [--preview]
 """
 
 from __future__ import annotations
@@ -13,21 +14,43 @@ import os
 import sys
 
 from . import api
-from .asteroids import WIDTH, HEIGHT, render
+from .palettes import build_palette
+from .render_context import RenderContext
+from .snake import render
 
 DEFAULT_USER = "lucaskawatoko"
+DEFAULT_COLOR = "#3fb950"
 DEFAULT_OUTPUT = "imgs/contribution-animation.gif"
+DATA_CHOICES = ("repos", "commits")
+
+
+def _load_items(args, username: str, token: str | None) -> list[dict]:
+    if args.mock:
+        return api.mock_items(args.data)
+    if args.data == "repos":
+        return api.fetch_repos(username)
+    if token:
+        return api.fetch_commits(username, token)
+    print("Aviso: --data commits exige GH_TOKEN/GITHUB_TOKEN. Usando dados fictícios.",
+          file=sys.stderr)
+    return api.mock_items("commits")
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="generator",
-        description="Gera o GIF Asteroids com os repositórios do usuário virando cometas.",
+        description="Gera o GIF da cobrinha comendo os dados do usuário.",
     )
     parser.add_argument("--user", "--username", dest="user", default=None,
                         help=f"usuário do GitHub (padrão: GH_USER ou {DEFAULT_USER})")
-    parser.add_argument("--limit", type=int, default=0,
-                        help="máximo de cometas (0 = todos, um por vez)")
+    parser.add_argument("--data", choices=DATA_CHOICES, default="repos",
+                        help="dados que viram comida da cobrinha")
+    parser.add_argument("--color", default=DEFAULT_COLOR,
+                        help="cor da cobrinha em hex (padrão: #3fb950)")
+    parser.add_argument("--background", default=None,
+                        help="cor de fundo em hex (padrão: derivada da cor)")
+    parser.add_argument("--food", default=None,
+                        help="cor da comida em hex (padrão: #ff6b4a)")
     parser.add_argument("--output", default=DEFAULT_OUTPUT)
     parser.add_argument("--mock", action="store_true",
                         help="usa dados fictícios em vez da API")
@@ -35,24 +58,23 @@ def main(argv: list[str] | None = None) -> int:
                         help="salva também um PNG do primeiro frame")
     args = parser.parse_args(argv)
 
+    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
     username = args.user or os.environ.get("GH_USER") or DEFAULT_USER
-    if args.mock:
-        repos = api.mock_repos()
-    else:
-        repos = api.fetch_repos(username)
+    items = _load_items(args, username, token)
+    palette = build_palette(args.color, args.background, args.food)
 
-    total = len(repos)
-    limit = args.limit if args.limit and args.limit > 0 else total
-    repos = repos[:limit]
-
-    if not repos:
-        print("Nenhum repositório público encontrado.", file=sys.stderr)
-
-    render(repos, args.output, args.preview)
+    ctx = RenderContext(
+        output=args.output,
+        palette=palette,
+        items=items,
+        data_name=args.data,
+        username=username,
+        preview=args.preview,
+    )
+    render(ctx)
     size = os.path.getsize(args.output) / 1024
-    shown = f" ({len(repos)} de {total})" if total > len(repos) else ""
-    print(f"GIF gerado em {args.output} ({size:.0f} KB, {WIDTH}x{HEIGHT}) "
-          f"para @{username} ({len(repos)} cometas{shown})")
+    print(f"GIF gerado em {args.output} ({size:.0f} KB, {ctx.width}x{ctx.height}) "
+          f"para @{username} ({len(items)} itens)")
     return 0
 
 

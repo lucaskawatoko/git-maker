@@ -18,13 +18,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Generate sample GIF
+      - name: Generate sample (repos, verde)
         uses: ./.github/actions/generate-gifs
         with:
           username: ${{ vars.SAMPLE_USERNAME || 'lucaskawatoko' }}
-          output: imgs/samples/asteroids.gif
+          data: repos
+          color: "#3fb950"
+          output: imgs/samples/snake-repos-green.gif
 
-      - name: Commit sample
+      - name: Generate sample (commits, azul calcinha)
+        uses: ./.github/actions/generate-gifs
+        with:
+          username: ${{ vars.SAMPLE_USERNAME || 'lucaskawatoko' }}
+          data: commits
+          color: "#aac8d6"
+          output: imgs/samples/snake-commits-azul-calcinha.gif
+
+      - name: Commit samples
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

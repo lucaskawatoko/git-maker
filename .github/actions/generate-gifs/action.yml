@@ -1,18 +1,31 @@
-name: "Generate contribution GIF"
+name: "Generate GitHub snake GIF"
 description: >-
-  Gera o GIF Asteroids com os repositórios públicos do usuário virando
-  cometas (um por vez). Sem servidor: roda direto no GitHub Actions e commita
-  o GIF no seu repositório.
+  Gera o GIF da cobrinha comendo os dados do GitHub (repositórios ou
+  contribuições). Cor da cobrinha, fundo e comida personalizáveis por hex.
+  Sem servidor: roda direto no GitHub Actions e commita o GIF no seu
+  repositório.
 
 inputs:
   username:
-    description: "Usuário do GitHub cujos repositórios serão usados."
+    description: "Usuário do GitHub cujos dados serão usados."
     required: false
     default: "lucaskawatoko"
-  limit:
-    description: "Máximo de cometas (0 = todos, um por vez)."
+  data:
+    description: "Dados que viram comida: repos (repositórios) ou commits (contribuições)."
     required: false
-    default: "0"
+    default: "repos"
+  color:
+    description: "Cor da cobrinha em hex (#rrggbb), ex: #aac8d6 (azul calcinha)."
+    required: false
+    default: "#3fb950"
+  background:
+    description: "Cor de fundo em hex (#rrggbb). Vazio deriva da cor da cobrinha."
+    required: false
+    default: ""
+  food:
+    description: "Cor da comida em hex (#rrggbb). Vazio usa o padrão #ff6b4a."
+    required: false
+    default: ""
   output:
     description: "Caminho de saída do GIF (relativo à raiz do repositório)."
     required: false
@@ -40,10 +53,16 @@ runs:
         }
         python -m generator \
           --user "$INPUT_USERNAME" \
-          --limit "$INPUT_LIMIT" \
+          --data "$INPUT_DATA" \
+          --color "$INPUT_COLOR" \
+          --background "$INPUT_BACKGROUND" \
+          --food "$INPUT_FOOD" \
           --output "$INPUT_OUTPUT"
       env:
         INPUT_USERNAME: ${{ inputs.username }}
-        INPUT_LIMIT: ${{ inputs.limit }}
+        INPUT_DATA: ${{ inputs.data }}
+        INPUT_COLOR: ${{ inputs.color }}
+        INPUT_BACKGROUND: ${{ inputs.background }}
+        INPUT_FOOD: ${{ inputs.food }}
         INPUT_OUTPUT: ${{ inputs.output }}
       shell: bash

@@ -5,13 +5,12 @@ on:
   pull_request:
 
 jobs:
-  render-mock:
+  render:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         python: ["3.9", "3.11", "3.12"]
-        style: [asteroids, snake]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -19,16 +18,9 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Install dependencies
         run: pip install -r requirements.txt
-      - name: Render all data types with mock
+      - name: Render GIF with mock data
         run: |
-          for data in repos commits followers; do
-            python -m generator \
-              --user lucaskawatoko \
-              --style "${{ matrix.style }}" \
-              --data "$data" \
-              --mock \
-              --preview \
-              --output "/tmp/${{ matrix.style }}-$data.gif"
-            test -s "/tmp/${{ matrix.style }}-$data.gif"
-            echo "OK ${{ matrix.style }}-$data"
-          done
+          python -m generator --user lucaskawatoko --mock --preview \
+            --output "/tmp/asteroids.gif"
+          test -s "/tmp/asteroids.gif"
+          echo "OK asteroids"

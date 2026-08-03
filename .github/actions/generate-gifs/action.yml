@@ -1,34 +1,18 @@
-name: "Generate GitHub contribution GIF"
+name: "Generate contribution GIF"
 description: >-
-  Gera uma animação GIF de perfil (asteroids ou snake) a partir de dados
-  públicos do GitHub (repositórios, contribuições ou seguidores). Sem servidor:
-  roda direto no GitHub Actions e commita o GIF no seu repositório.
+  Gera o GIF Asteroids com os repositórios públicos do usuário virando
+  cometas (um por vez). Sem servidor: roda direto no GitHub Actions e commita
+  o GIF no seu repositório.
 
 inputs:
   username:
-    description: "Usuário do GitHub cujos dados serão usados."
+    description: "Usuário do GitHub cujos repositórios serão usados."
     required: false
     default: "lucaskawatoko"
-  style:
-    description: "Estilo da animação: asteroids ou snake."
-    required: false
-    default: "asteroids"
-  data:
-    description: "Dados: repos, commits (contribuições) ou followers."
-    required: false
-    default: "repos"
   limit:
-    description: "Máximo de cometas (0 = todos, um por vez no jogo)."
+    description: "Máximo de cometas (0 = todos, um por vez)."
     required: false
     default: "0"
-  color:
-    description: "Paleta: cyan, pink, green, orange, purple, blue ou uma cor hex (#rrggbb)."
-    required: false
-    default: "cyan"
-  avatar:
-    description: "Coloca o avatar do usuário na animação (true/false)."
-    required: false
-    default: "false"
   output:
     description: "Caminho de saída do GIF (relativo à raiz do repositório)."
     required: false
@@ -54,24 +38,12 @@ runs:
           echo "generator/main.py não encontrado. GITHUB_ACTION_PATH=$GITHUB_ACTION_PATH"
           exit 1
         }
-        AVATAR_ARG=""
-        if [ "$INPUT_AVATAR" = "true" ]; then
-          AVATAR_ARG="--avatar"
-        fi
         python -m generator \
           --user "$INPUT_USERNAME" \
-          --style "$INPUT_STYLE" \
-          --data "$INPUT_DATA" \
           --limit "$INPUT_LIMIT" \
-          --color "$INPUT_COLOR" \
-          $AVATAR_ARG \
           --output "$INPUT_OUTPUT"
       env:
         INPUT_USERNAME: ${{ inputs.username }}
-        INPUT_STYLE: ${{ inputs.style }}
-        INPUT_DATA: ${{ inputs.data }}
         INPUT_LIMIT: ${{ inputs.limit }}
-        INPUT_COLOR: ${{ inputs.color }}
-        INPUT_AVATAR: ${{ inputs.avatar }}
         INPUT_OUTPUT: ${{ inputs.output }}
       shell: bash

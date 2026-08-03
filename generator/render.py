@@ -19,19 +19,6 @@ def load_font(size: int) -> ImageFont.ImageFont:
     return ImageFont.load_default()
 
 
-_RESAMPLE = getattr(Image, "Resampling", Image).LANCZOS
-
-
-def circular_crop(img: Image.Image, diameter: int) -> Image.Image:
-    """Recorta a imagem em um círculo com o diâmetro dado (RGBA)."""
-    img = img.convert("RGBA").resize((diameter, diameter), _RESAMPLE)
-    mask = Image.new("L", (diameter, diameter), 0)
-    ImageDraw.Draw(mask).ellipse((0, 0, diameter - 1, diameter - 1), fill=255)
-    out = Image.new("RGBA", (diameter, diameter), (0, 0, 0, 0))
-    out.paste(img, (0, 0), mask)
-    return out
-
-
 def save_gif(frames: list[Image.Image], output: str, fps: int, preview: bool) -> None:
     if not frames:
         raise SystemExit("Nenhum frame gerado.")

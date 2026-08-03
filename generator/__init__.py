@@ -1,3 +1,3 @@
-"""github-gif-maker: gera animações GIF de perfil (Asteroids/Snake) com dados do GitHub."""
+"""github-gif-maker: GIF Asteroids que atira nos repositórios públicos do usuário."""
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"

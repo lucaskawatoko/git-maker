@@ -52,7 +52,8 @@ runs:
           --data "$INPUT_DATA" \
           --color "$INPUT_COLOR" \
           --food "$INPUT_FOOD" \
-          --output "$INPUT_OUTPUT"
+          --output "$RUNNER_TEMP/snake.gif"
+        install -D -m 644 "$RUNNER_TEMP/snake.gif" "$GITHUB_WORKSPACE/$INPUT_OUTPUT"
       env:
         INPUT_USERNAME: ${{ inputs.username }}
         INPUT_DATA: ${{ inputs.data }}

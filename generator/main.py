@@ -16,17 +16,19 @@ import sys
 from . import api
 from .palettes import build_palette
 from .render_context import RenderContext
-from .snake import render
+from .snake import MAX_ITEMS, render
 
 DEFAULT_USER = "lucaskawatoko"
 DEFAULT_COLOR = "#3fb950"
 DEFAULT_OUTPUT = "imgs/contribution-animation.gif"
-DATA_CHOICES = ("repos", "commits")
+DATA_CHOICES = ("repos", "commits", "followers")
 
 
 def _load_items(args, username: str, token: str | None) -> list[dict]:
     if args.mock:
         return api.mock_items(args.data)
+    if args.data == "followers":
+        return api.fetch_followers(username)
     if args.data == "repos":
         return api.fetch_repos(username)
     if token:
@@ -44,7 +46,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--user", "--username", dest="user", default=None,
                         help=f"usuário do GitHub (padrão: GH_USER ou {DEFAULT_USER})")
     parser.add_argument("--data", choices=DATA_CHOICES, default="repos",
-                        help="dados que viram comida da cobrinha")
+                        help="dados que viram comida da cobrinha (repos, commits, followers)")
     parser.add_argument("--color", default=DEFAULT_COLOR,
                         help="cor da cobrinha em hex (padrão: #3fb950)")
     parser.add_argument("--food", default=None,
@@ -61,6 +63,18 @@ def main(argv: list[str] | None = None) -> int:
     items = _load_items(args, username, token)
     palette = build_palette(args.color, args.food)
 
+    avatar = None
+    avatars: dict = {}
+    if not args.mock:
+        avatar = api.fetch_avatar(username)
+        if args.data == "followers":
+            for item in items[:MAX_ITEMS]:
+                url = item.get("avatar_url")
+                if url:
+                    img = api.load_image(url, 64)
+                    if img:
+                        avatars[item["name"]] = img
+
     ctx = RenderContext(
         output=args.output,
         palette=palette,
@@ -68,6 +82,8 @@ def main(argv: list[str] | None = None) -> int:
         data_name=args.data,
         username=username,
         preview=args.preview,
+        avatar=avatar,
+        avatars=avatars,
     )
     render(ctx)
     size = os.path.getsize(args.output) / 1024

@@ -31,6 +31,12 @@ jobs:
             --output "/tmp/snake-azul.gif"
           test -s "/tmp/snake-azul.gif"
           echo "OK snake (hex)"
+      - name: Render snake with followers (mock)
+        run: |
+          python -m generator --data followers --mock \
+            --output "/tmp/snake-followers.gif"
+          test -s "/tmp/snake-followers.gif"
+          echo "OK snake (followers)"
       - name: Fetch repos com paginação
         run: |
           python - <<'EOF'
@@ -54,4 +60,25 @@ jobs:
           assert counts == sorted(counts, reverse=True), "ranking fora de ordem"
           assert len(out) == 301, len(out)
           print("OK paginação")
+          EOF
+      - name: Fetch followers com paginação
+        run: |
+          python - <<'EOF'
+          from generator import api
+
+          pages = [[{"login": f"f{i:03d}", "avatar_url": ""} for i in range(100)]
+                   for _ in range(2)] + [[{"login": "f-last", "avatar_url": ""}]]
+          calls = []
+
+          def fake_get(url):
+              calls.append(url)
+              return pages[len(calls) - 1]
+
+          api._get_json = fake_get
+          out = api.fetch_followers("teste")
+          assert len(calls) == 3, calls
+          assert len(out) == 201, len(out)
+          assert all(i["count"] == 1 for i in out), "cada seguidor vale 1 ponto"
+          assert out[0]["name"] == "f000", "ordem da API preservada"
+          print("OK seguidores")
           EOF

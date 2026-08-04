@@ -24,3 +24,5 @@ class RenderContext:
     preview: bool = False
     width: int = 700
     height: int = 420
+    avatar: Image.Image | None = None
+    avatars: dict = field(default_factory=dict)

@@ -7,7 +7,7 @@ Obrigado por ajudar o git-maker! Projeto propositalmente enxuto.
 ```
 generator/
   main.py            # CLI: --user --data --color --food --output --mock --preview
-  api.py             # busca de repositórios (REST) / contribuições (GraphQL) + dados fictícios
+  api.py             # busca de repos (REST) / contribuições (GraphQL) / seguidores (REST) + avatares
   palettes.py        # deriva a paleta (cobra, comida) a partir de cores hex
   snake.py           # o jogo: cobrinha auto-play (BFS) comendo os dados
   render.py          # utilidades: fontes e gravação do GIF (com transparência)
@@ -16,12 +16,19 @@ generator/
 
 ## Como o jogo funciona
 
-- Cada item (repositório ou semana de contribuição) vira uma comida na grade.
+- Cada item (repositório, semana de contribuição ou seguidor) vira uma comida
+  na grade.
 - A cobrinha é auto-play: `find_path` usa BFS para ir até a comida; o `count`
-  de cada item soma no SCORE (estrelas em `repos`, contribuições em `commits`).
+  de cada item soma no SCORE (estrelas em `repos`, contribuições em `commits`,
+  1 ponto por seguidor).
 - A cobrinha **cresce** a cada comida (`pending += 1` no `simulate`).
 - As linhas 0-2 da arena são a **faixa do HUD** (`PLAY_ROW0 = 3`): a cobrinha
   e as comidas só ocupam as linhas 3 em diante (limite invisível).
+- A **cabeça da cobrinha** usa o avatar do usuário (`api.fetch_avatar`,
+  `https://github.com/{user}.png`) recortado no formato da célula; se o
+  download falhar, cai para a cor derivada.
+- Em `followers`, cada comida é o **avatar do seguidor** (`api.load_image` +
+  `ctx.avatars`); sem avatar, cai para o círculo da cor `food`.
 - O fundo é **transparente** (RGBA); só a borda da arena é desenhada. O GIF é
   salvo com índice de transparência (`render.save_gif` converte RGBA → P).
 - A paleta é derivada da `color` (hex) em `palettes.build_palette`, com a cor
@@ -32,10 +39,12 @@ generator/
 
 ```bash
 python -m generator --mock --preview
+python -m generator --data followers --mock --preview
 ```
 
 Testes de CI (`.github/workflows/test.yml`) renderizam a cobrinha com dados
-fictícios nas versões 3.9, 3.11 e 3.12 do Python, incluindo cores hex.
+fictícios nas versões 3.9, 3.11 e 3.12 do Python, incluindo cores hex,
+seguidores e paginação de `fetch_repos`/`fetch_followers`.
 
 ## Convenções
 

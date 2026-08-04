@@ -1,9 +1,9 @@
 name: "Generate GitHub snake GIF"
 description: >-
-  Gera o GIF da cobrinha comendo os dados do GitHub (repositórios ou
-  contribuições). Cor da cobrinha e da comida personalizáveis por hex, fundo
-  transparente. Sem servidor: roda direto no GitHub Actions e commita o GIF no
-  seu repositório.
+  Gera o GIF da cobrinha comendo os dados do GitHub (repositórios,
+  contribuições ou seguidores). Cor da cobrinha e da comida personalizáveis por
+  hex, fundo transparente e avatar do usuário na cabeça. Sem servidor: roda
+  direto no GitHub Actions e commita o GIF no seu repositório.
 
 inputs:
   username:
@@ -11,7 +11,7 @@ inputs:
     required: false
     default: "lucaskawatoko"
   data:
-    description: "Dados que viram comida: repos (repositórios) ou commits (contribuições)."
+    description: "Dados que viram comida: repos (repositórios), commits (contribuições) ou followers (seguidores)."
     required: false
     default: "repos"
   color:

@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import io
 import json
 import random
 import sys
 from urllib.request import Request, urlopen
 
+from PIL import Image
+
 _USER_AGENT = "github-gif-maker"
 _TIMEOUT = 30
+_FOLLOWERS_PAGES = 10  # até 1000 seguidores (~10 req/h sem token)
 
 
 def _get_json(url: str) -> dict | list:
@@ -90,6 +94,52 @@ def fetch_commits(username: str, token: str) -> list[dict]:
     return rank_items(items)
 
 
+def fetch_followers(username: str) -> list[dict]:
+    """Seguidores públicos via REST (sem token), paginado. Cada seguidor = 1 comida."""
+    items: list[dict] = []
+    for page in range(1, _FOLLOWERS_PAGES + 1):
+        url = (f"https://api.github.com/users/{username}/followers"
+               f"?per_page=100&page={page}")
+        try:
+            nodes = _get_json(url)
+        except Exception as exc:  # noqa: BLE001
+            raise SystemExit(f"Falha ao buscar seguidores de @{username}: {exc}") from exc
+        if isinstance(nodes, dict) and nodes.get("message"):
+            raise SystemExit(f"Erro da API GitHub: {nodes['message']}")
+        if not nodes:
+            break
+        items.extend(nodes)
+        if len(nodes) < 100:
+            break
+    followers = [
+        {"name": n.get("login", ""), "count": 1, "avatar_url": n.get("avatar_url", "")}
+        for n in items
+    ]
+    return rank_items(followers)
+
+
+# ---------------------------------------------------------------------------
+# Avatares (cabeça da cobrinha e comidas que são seguidores)
+# ---------------------------------------------------------------------------
+def load_image(url: str, size: int) -> Image.Image | None:
+    """Baixa uma imagem e redimensiona para `size`×`size`. None se falhar."""
+    try:
+        req = Request(url, headers={"User-Agent": _USER_AGENT})
+        with urlopen(req, timeout=_TIMEOUT) as resp:
+            data = resp.read()
+        img = Image.open(io.BytesIO(data)).convert("RGBA")
+        if img.size != (size, size):
+            img = img.resize((size, size), Image.LANCZOS)
+        return img
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def fetch_avatar(username: str, size: int = 96) -> Image.Image | None:
+    """Avatar do usuário, usado na cabeça da cobrinha."""
+    return load_image(f"https://github.com/{username}.png?size={size}", size)
+
+
 # ---------------------------------------------------------------------------
 # Dados fictícios (úteis para pré-visualizar localmente / CI)
 # ---------------------------------------------------------------------------
@@ -106,6 +156,8 @@ def mock_items(data: str) -> list[dict]:
         items = [
             {"name": name, "count": rng.randint(100, 40000)} for name in _MOCK_REPOS
         ]
+    elif data == "followers":
+        items = [{"name": f"user{i:03d}", "count": 1} for i in range(1, 40)]
     else:
         items = [
             {"name": f"S{i + 1:02d}", "count": rng.randint(0, 25)} for i in range(52)

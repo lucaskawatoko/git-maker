@@ -35,6 +35,15 @@ jobs:
           food: "#e5534b"
           output: imgs/samples/snake-commits-azul-calcinha.gif
 
+      - name: Generate sample (followers, roxo)
+        uses: ./.github/actions/generate-gifs
+        with:
+          username: ${{ vars.SAMPLE_USERNAME || 'lucaskawatoko' }}
+          data: followers
+          color: "#a371f7"
+          food: "#3fb950"
+          output: imgs/samples/snake-followers-roxo.gif
+
       - name: Commit samples
         run: |
           git config user.name "github-actions[bot]"

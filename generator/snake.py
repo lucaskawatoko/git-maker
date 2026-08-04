@@ -31,12 +31,14 @@ MAX_ITEMS = 25  # limita a quantidade de alimentos para manter o GIF leve
 TITLES = {
     "repos": "ASTRO SNAKE",
     "commits": "ASTRO SNAKE",
+    "followers": "ASTRO SNAKE",
 }
 SUBTITLES = {
     "repos": "seus repositórios viraram comida!",
     "commits": "suas contribuições viraram comida!",
+    "followers": "seus seguidores viraram comida!",
 }
-HUD_LABELS = {"repos": "REPOS", "commits": "CONTRIB"}
+HUD_LABELS = {"repos": "REPOS", "commits": "CONTRIB", "followers": "SEGUIDORES"}
 MAX_NAME = 14
 
 DIRS = ((1, 0), (-1, 0), (0, 1), (0, -1))
@@ -161,16 +163,26 @@ def _cell_rect(cell: tuple[int, int]) -> tuple[int, int, int, int]:
     return (x, y, x + CELL - 2, y + CELL - 2)
 
 
-def _draw_food(draw: ImageDraw.ImageDraw, pal, food: tuple[int, int],
-               name: str, font) -> None:
+def _draw_food(draw: ImageDraw.ImageDraw, overlay: Image.Image, pal, food: tuple[int, int],
+               name: str, font, avatar_img: Image.Image | None = None) -> None:
     r, c = food
     cx = GRID_X + c * CELL + CELL // 2
     cy = GRID_Y + r * CELL + CELL // 2
     half = 7
-    draw.ellipse((cx - half, cy - half, cx + half, cy + half),
-                 fill=pal["warn"] + (255,), outline=(255, 255, 255, 180))
-    draw.ellipse((cx - half + 2, cy - half + 2, cx - half + 5, cy - half + 5),
-                 fill=(255, 255, 255, 220))
+    if avatar_img is not None:
+        d = 2 * half + 2
+        x0, y0 = cx - d // 2, cy - d // 2
+        img = avatar_img.resize((d, d), Image.LANCZOS)
+        mask = Image.new("L", (d, d), 0)
+        ImageDraw.Draw(mask).ellipse((0, 0, d - 1, d - 1), fill=255)
+        overlay.paste(img, (x0, y0), mask)
+        draw.ellipse((x0 - 1, y0 - 1, x0 + d, y0 + d),
+                     outline=(255, 255, 255, 160), width=1)
+    else:
+        draw.ellipse((cx - half, cy - half, cx + half, cy + half),
+                     fill=pal["warn"] + (255,), outline=(255, 255, 255, 180))
+        draw.ellipse((cx - half + 2, cy - half + 2, cx - half + 5, cy - half + 5),
+                     fill=(255, 255, 255, 220))
 
     label = name if len(name) <= MAX_NAME else name[: MAX_NAME - 1] + "…"
     tw = draw.textlength(label, font=font)
@@ -179,12 +191,21 @@ def _draw_food(draw: ImageDraw.ImageDraw, pal, food: tuple[int, int],
     draw.text((lx, ly), label, font=font, fill=pal["primary"] + (255,))
 
 
-def _draw_snake(draw: ImageDraw.ImageDraw, pal, body: list[tuple[int, int]]) -> None:
+def _draw_snake(draw: ImageDraw.ImageDraw, overlay: Image.Image, pal,
+                body: list[tuple[int, int]], avatar: Image.Image | None = None) -> None:
     for i in range(len(body) - 1, 0, -1):
         draw.rounded_rectangle(_cell_rect(body[i]), radius=6,
                                fill=pal["primary"] + (255,))
-    draw.rounded_rectangle(_cell_rect(body[0]), radius=6,
-                           fill=pal["secondary"] + (255,))
+    x, y, x2, y2 = _cell_rect(body[0])
+    if avatar is not None:
+        w = x2 - x + 1
+        img = avatar.resize((w, w), Image.LANCZOS)
+        mask = Image.new("L", (w, w), 0)
+        ImageDraw.Draw(mask).rounded_rectangle((0, 0, w - 1, w - 1), radius=6, fill=255)
+        overlay.paste(img, (x, y), mask)
+    else:
+        draw.rounded_rectangle(_cell_rect(body[0]), radius=6,
+                               fill=pal["secondary"] + (255,))
 
 
 def _draw_hud(draw: ImageDraw.ImageDraw, pal, state: dict, total: int,
@@ -252,8 +273,10 @@ def render(ctx: RenderContext) -> None:
 
         current = items[state["idx"]] if state["idx"] < len(items) else None
         if current is not None and not state["done"]:
-            _draw_food(draw, ctx.palette, state["food"], current["name"], font_s)
-        _draw_snake(draw, ctx.palette, state["body"])
+            avatar_img = ctx.avatars.get(current["name"])
+            _draw_food(draw, overlay, ctx.palette, state["food"], current["name"],
+                       font_s, avatar_img)
+        _draw_snake(draw, overlay, ctx.palette, state["body"], ctx.avatar)
         _draw_hud(draw, ctx.palette, state, len(items), font_s, font_l)
         _draw_intro(draw, ctx.palette, i, ctx.data_name, font_s, font_l)
 

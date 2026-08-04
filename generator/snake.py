@@ -19,6 +19,8 @@ GRID_X, GRID_Y = 50, 46
 WIDTH = COLS * CELL + 2 * GRID_X
 HEIGHT = ROWS * CELL + GRID_Y + 34
 
+PLAY_ROW0 = 3  # linhas 0-2 são a faixa do HUD; a cobra/comida só jogam a partir daqui
+
 INTRO = 22
 OUTRO = 14
 FPS = 24
@@ -42,7 +44,7 @@ DIRS = ((1, 0), (-1, 0), (0, 1), (0, -1))
 
 def _in_bounds(cell: tuple[int, int]) -> bool:
     r, c = cell
-    return 0 <= r < ROWS and 0 <= c < COLS
+    return PLAY_ROW0 <= r < ROWS and 0 <= c < COLS
 
 
 def find_path(body: list[tuple[int, int]], goal: tuple[int, int]) -> list[tuple[int, int]] | None:
@@ -85,7 +87,7 @@ def _fallback_move(body: list[tuple[int, int]]) -> tuple[int, int]:
 
 def _spawn_food(rng: random.Random, occupied: set) -> tuple[int, int]:
     for _ in range(500):
-        cell = (rng.randrange(ROWS), rng.randrange(COLS))
+        cell = (rng.randrange(PLAY_ROW0, ROWS), rng.randrange(COLS))
         if cell not in occupied:
             return cell
     raise SystemExit("Sem espaço livre para a cobra.")
@@ -258,7 +260,7 @@ def render(ctx: RenderContext) -> None:
         if state["done"] and i >= INTRO:
             msg = "CONCLUÍDO!"
             tw = draw.textlength(msg, font=font_l)
-            draw.text(((WIDTH - tw) / 2, HEIGHT - 30), msg, font=font_l,
+            draw.text(((WIDTH - tw) / 2, GRID_Y + 12), msg, font=font_l,
                       fill=ctx.palette["accent"] + (255,))
 
         frame = Image.alpha_composite(frame, overlay)

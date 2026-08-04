@@ -43,7 +43,8 @@ def fetch_repos(username: str) -> list[dict]:
         if len(nodes) < 100:
             break
         page += 1
-    repos = [{"name": n.get("name", ""), "count": n.get("size", 0) or 0} for n in items]
+    repos = [{"name": n.get("name", ""), "count": n.get("stargazers_count", 0) or 0}
+             for n in items]
     return rank_items(repos)
 
 

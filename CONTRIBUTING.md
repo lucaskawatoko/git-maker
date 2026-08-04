@@ -18,8 +18,10 @@ generator/
 
 - Cada item (repositório ou semana de contribuição) vira uma comida na grade.
 - A cobrinha é auto-play: `find_path` usa BFS para ir até a comida; o `count`
-  de cada item soma no SCORE.
+  de cada item soma no SCORE (estrelas em `repos`, contribuições em `commits`).
 - A cobrinha **cresce** a cada comida (`pending += 1` no `simulate`).
+- As linhas 0-2 da arena são a **faixa do HUD** (`PLAY_ROW0 = 3`): a cobrinha
+  e as comidas só ocupam as linhas 3 em diante (limite invisível).
 - O fundo é **transparente** (RGBA); só a borda da arena é desenhada. O GIF é
   salvo com índice de transparência (`render.save_gif` converte RGBA → P).
 - A paleta é derivada da `color` (hex) em `palettes.build_palette`, com a cor

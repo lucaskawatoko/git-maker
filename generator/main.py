@@ -56,7 +56,7 @@ def _run_ascii(args, username: str) -> int:
     ink = ascii_art.DEFAULT_INK if not args.color else _hex(args.color) + (255,)
     ascii_art.render_ascii(
         avatar, args.output, cols=args.width, ink=ink,
-        fps=24, preview=args.preview,
+        fps=24, preview=args.preview, dither=args.dither,
     )
     size = os.path.getsize(args.output) / 1024
     print(f"ASCII gerado em {args.output} ({size:.0f} KB, {args.width} colunas) "
@@ -75,7 +75,7 @@ def main(argv: list[str] | None = None) -> int:
                         help="dados que viram comida da cobrinha (repos, commits, followers)")
     parser.add_argument("--color", default=None,
                         help="cor da cobrinha/tinta em hex (padrão cobrinha: #3fb950; "
-                             "padrão ASCII: cinza-médio #57606a, legível nos dois temas)")
+                             "padrão ASCII: quase preto #1f2328, contraste forte)")
     parser.add_argument("--food", default=None,
                         help="cor da comida em hex (padrão: #ff6b4a)")
     parser.add_argument("--output", default=DEFAULT_OUTPUT)
@@ -89,6 +89,11 @@ def main(argv: list[str] | None = None) -> int:
                         help="gera o GIF ASCII do avatar (foto com efeito de impressão)")
     parser.add_argument("--width", type=int, default=56,
                         help="largura da grade ASCII em colunas (padrão: 56)")
+    parser.add_argument("--dither", dest="dither", action="store_true", default=None,
+                        help="textura pontilhada (Floyd-Steinberg) na foto ASCII")
+    parser.add_argument("--no-dither", dest="dither", action="store_false",
+                        help="traço fino, sem pontilhado")
+    parser.set_defaults(dither=True)
     args = parser.parse_args(argv)
 
     token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")

@@ -54,6 +54,10 @@ generator/
 - `to_grid` detecta a **polaridade** (região central mais escura que o fundo ⇒
   inverte a luminância) para a figura sempre virar tinta pesada da rampa,
   independentemente do tema do avatar.
+- Com `dither=True` (padrão), os tons da figura são quantizados com
+  **Floyd–Steinberg** (aperiódico): a foto vira uma textura pontilhada em vez
+  de traço fino. O Bayer 4×4 foi descartado — sua periodicidade cria listras
+  diagonais que afogam o rosto.
 - Cada linha é pré-renderizada uma vez; os frames mostram o "cabeçote"
   revelando caractere a caractere, de cima para baixo.
 - O último frame (foto completa) recebe uma `duration` maior para o hold —

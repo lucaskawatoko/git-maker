@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw
 from .render import FPS, load_font, save_gif_fixed
 
 RAMP = " .:-=+*#%@"  # escuro → claro
-DEFAULT_INK = (87, 96, 106, 255)  # #57606a (GitHub muted): legível em temas claro/escuro
+DEFAULT_INK = (31, 35, 40, 255)  # #1f2328 quase preto: contraste forte no tema claro
 PAD = 12
 FONT_SIZE = 12
 PRINT_SECONDS = 9.0
@@ -35,7 +35,8 @@ def mock_avatar(size: int = 200) -> Image.Image:
 
 
 def to_grid(avatar: Image.Image, cols: int, char_w: float, char_h: float,
-            crop: float = 0.9, bg_frac: float = 0.10) -> list[str]:
+            crop: float = 0.9, bg_frac: float = 0.10,
+            dither: bool = True) -> list[str]:
     """Converte a imagem em grade de caracteres, mantendo a proporção visual.
 
     Fotos de avatar costumam ter a figura escura no centro sobre fundo
@@ -44,6 +45,9 @@ def to_grid(avatar: Image.Image, cols: int, char_w: float, char_h: float,
     estimamos o fundo pela borda da grade (mediana) e detectamos a polaridade
     (se o centro é mais escuro que o fundo, invertemos para a figura virar
     tinta pesada). Pixels próximos do fundo viram espaço (fundo transparente).
+
+    Com `dither`, os tons da figura são quantizados com Floyd–Steinberg
+    (aperiódico): vira uma textura pontilhada de "foto" em vez de traço fino.
     """
     if crop and 0 < crop < 1:
         w, h = avatar.size
@@ -70,16 +74,34 @@ def to_grid(avatar: Image.Image, cols: int, char_w: float, char_h: float,
     bg_dev = max(12.0, bg_frac * span)
     lo2, hi2 = (255 - hi, 255 - lo) if invert else (lo, hi)
 
+    # -1.0 = espaço (fundo removido); senão t em [0,1] (figura escura → 1)
+    T = [[-1.0 if abs(V[y][x] - bg) < bg_dev
+          else max(0.0, min(1.0, ((255 - V[y][x] if invert else V[y][x]) - lo2) / (hi2 - lo2)))
+          for x in range(cols)] for y in range(rows)]
+
     lines = []
     for y in range(rows):
         row = []
         for x in range(cols):
-            v = V[y][x]
-            if abs(v - bg) < bg_dev:
+            tv = T[y][x]
+            if tv < 0:
                 row.append(" ")
+                continue
+            if dither:
+                idx = max(0, min(len(RAMP) - 1, round(tv * (len(RAMP) - 1))))
+                err = tv - idx / (len(RAMP) - 1)
+                if x + 1 < cols and T[y][x + 1] >= 0:
+                    T[y][x + 1] += err * 7 / 16
+                if y + 1 < rows:
+                    if x > 0 and T[y + 1][x - 1] >= 0:
+                        T[y + 1][x - 1] += err * 3 / 16
+                    if T[y + 1][x] >= 0:
+                        T[y + 1][x] += err * 5 / 16
+                    if x + 1 < cols and T[y + 1][x + 1] >= 0:
+                        T[y + 1][x + 1] += err * 1 / 16
+                row.append(RAMP[idx])
             else:
-                vv = 255 - v if invert else v
-                row.append(_char_for(vv, lo2, hi2))
+                row.append(_char_for(tv, 0.0, 1.0))
         lines.append("".join(row))
     return lines
 
@@ -104,13 +126,13 @@ def _compose(W: int, H: int, pad: int, char_w: float, char_h: int,
 
 def render_ascii(avatar: Image.Image, output: str, cols: int = 56,
                  ink: tuple = DEFAULT_INK, fps: int = FPS,
-                 preview: bool = False) -> None:
+                 preview: bool = False, dither: bool = True) -> None:
     font = load_font(FONT_SIZE)
     ascent = font.getmetrics()[0]
     probe = ImageDraw.Draw(Image.new("RGBA", (4, 4)))
     char_w = probe.textlength("M", font=font)
     char_h = ascent
-    grid = to_grid(avatar, cols, char_w, char_h)
+    grid = to_grid(avatar, cols, char_w, char_h, dither=dither)
     rows = len(grid)
 
     W = int(cols * char_w) + 2 * PAD

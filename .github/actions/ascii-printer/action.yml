@@ -14,9 +14,13 @@ inputs:
     required: false
     default: "56"
   color:
-    description: "Cor da tinta em hex (#rrggbb). Vazio usa cinza claro (#c9d1d9)."
+    description: "Cor da tinta em hex (#rrggbb). Vazio usa quase preto (#1f2328)."
     required: false
     default: ""
+  dither:
+    description: "Textura pontilhada (Floyd-Steinberg) na foto ASCII: 'true' ou 'false'."
+    required: false
+    default: "true"
   output:
     description: "Caminho de saída do GIF (relativo à raiz do repositório)."
     required: false
@@ -44,15 +48,19 @@ runs:
         }
         COLOR_ARGS=()
         if [ -n "$INPUT_COLOR" ]; then COLOR_ARGS=(--color "$INPUT_COLOR"); fi
+        DITHER_ARGS=()
+        if [ "$INPUT_DITHER" = "true" ]; then DITHER_ARGS=(--dither); else DITHER_ARGS=(--no-dither); fi
         python -m generator --ascii \
           --user "$INPUT_USERNAME" \
           --width "$INPUT_WIDTH" \
           "${COLOR_ARGS[@]}" \
+          "${DITHER_ARGS[@]}" \
           --output "$RUNNER_TEMP/ascii.gif"
         install -D -m 644 "$RUNNER_TEMP/ascii.gif" "$GITHUB_WORKSPACE/$INPUT_OUTPUT"
       env:
         INPUT_USERNAME: ${{ inputs.username }}
         INPUT_WIDTH: ${{ inputs.width }}
         INPUT_COLOR: ${{ inputs.color }}
+        INPUT_DITHER: ${{ inputs.dither }}
         INPUT_OUTPUT: ${{ inputs.output }}
       shell: bash

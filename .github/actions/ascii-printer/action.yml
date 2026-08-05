@@ -1,0 +1,58 @@
+name: "Generate ASCII profile photo GIF"
+description: >-
+  Gera o seu avatar como foto ASCII art com efeito de impressão (caractere a
+  caractere, de cima para baixo), monocromático e fundo transparente. Roda
+  direto no GitHub Actions e entrega o GIF no workspace do seu repositório.
+
+inputs:
+  username:
+    description: "Usuário do GitHub cujo avatar será convertido."
+    required: false
+    default: "lucaskawatoko"
+  width:
+    description: "Largura da grade ASCII em colunas (altura é calculada pela proporção)."
+    required: false
+    default: "56"
+  color:
+    description: "Cor da tinta em hex (#rrggbb). Vazio usa cinza claro (#c9d1d9)."
+    required: false
+    default: ""
+  output:
+    description: "Caminho de saída do GIF (relativo à raiz do repositório)."
+    required: false
+    default: "imgs/profile-ascii.gif"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install dependencies
+      run: pip install -r "${{ github.action_path }}/../../../requirements.txt"
+      shell: bash
+
+    - name: Generate ASCII GIF
+      run: |
+        set -euo pipefail
+        cd "$GITHUB_ACTION_PATH/../../.."
+        test -f generator/main.py || {
+          echo "generator/main.py não encontrado. GITHUB_ACTION_PATH=$GITHUB_ACTION_PATH"
+          exit 1
+        }
+        COLOR_ARGS=()
+        if [ -n "$INPUT_COLOR" ]; then COLOR_ARGS=(--color "$INPUT_COLOR"); fi
+        python -m generator --ascii \
+          --user "$INPUT_USERNAME" \
+          --width "$INPUT_WIDTH" \
+          "${COLOR_ARGS[@]}" \
+          --output "$RUNNER_TEMP/ascii.gif"
+        install -D -m 644 "$RUNNER_TEMP/ascii.gif" "$GITHUB_WORKSPACE/$INPUT_OUTPUT"
+      env:
+        INPUT_USERNAME: ${{ inputs.username }}
+        INPUT_WIDTH: ${{ inputs.width }}
+        INPUT_COLOR: ${{ inputs.color }}
+        INPUT_OUTPUT: ${{ inputs.output }}
+      shell: bash

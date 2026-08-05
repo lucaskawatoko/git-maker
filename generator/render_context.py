@@ -27,3 +27,5 @@ class RenderContext:
     avatar: Image.Image | None = None
     avatars: dict = field(default_factory=dict)
     seed: int | None = None
+    total_items: int | None = None
+    smooth: bool = True

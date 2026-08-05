@@ -30,6 +30,10 @@ inputs:
     description: "Semente da simulação (opcional). Vazio = caminho aleatório a cada geração."
     required: false
     default: ""
+  smooth:
+    description: "Movimento interpolado (mais fluido, GIF maior): 'true' ou 'false'."
+    required: false
+    default: "true"
 
 runs:
   using: "composite"
@@ -53,12 +57,15 @@ runs:
         }
         SEED_ARGS=()
         if [ -n "$INPUT_SEED" ]; then SEED_ARGS=(--seed "$INPUT_SEED"); fi
+        SMOOTH_ARGS=()
+        if [ "$INPUT_SMOOTH" = "false" ]; then SMOOTH_ARGS=(--no-smooth); fi
         python -m generator \
           --user "$INPUT_USERNAME" \
           --data "$INPUT_DATA" \
           --color "$INPUT_COLOR" \
           --food "$INPUT_FOOD" \
           "${SEED_ARGS[@]}" \
+          "${SMOOTH_ARGS[@]}" \
           --output "$RUNNER_TEMP/snake.gif"
         install -D -m 644 "$RUNNER_TEMP/snake.gif" "$GITHUB_WORKSPACE/$INPUT_OUTPUT"
       env:
@@ -68,4 +75,5 @@ runs:
         INPUT_FOOD: ${{ inputs.food }}
         INPUT_OUTPUT: ${{ inputs.output }}
         INPUT_SEED: ${{ inputs.seed }}
+        INPUT_SMOOTH: ${{ inputs.smooth }}
       shell: bash

@@ -29,18 +29,25 @@ def rank_items(items: list[dict]) -> list[dict]:
 
 
 def fetch_repos(username: str) -> list[dict]:
-    """Repositórios públicos do usuário via REST (sem token), paginado."""
+    """Top repositórios públicos do usuário por estrelas via Search API.
+
+    O endpoint REST `GET /users/{login}/repos` não aceita `sort=stars`; a
+    Search API (`q=user:{login} fork:false&sort=stars`) sim e já devolve
+    ordenado por estrelas. Uma chamada cobre o top 100 — mais que os 25 do GIF.
+    """
     items: list[dict] = []
     page = 1
-    while page <= 10:
-        url = (f"https://api.github.com/users/{username}/repos"
-               f"?per_page=100&page={page}&type=owner&sort=updated")
+    while page <= 5:
+        url = ("https://api.github.com/search/repositories"
+               f"?q=user:{username}+fork:false"
+               f"&sort=stars&order=desc&per_page=100&page={page}")
         try:
-            nodes = _get_json(url)
+            data = _get_json(url)
         except Exception as exc:  # noqa: BLE001
             raise SystemExit(f"Falha ao buscar repositórios de @{username}: {exc}") from exc
-        if isinstance(nodes, dict) and nodes.get("message"):
-            raise SystemExit(f"Erro da API GitHub: {nodes['message']}")
+        if isinstance(data, dict) and data.get("message"):
+            raise SystemExit(f"Erro da API GitHub: {data['message']}")
+        nodes = data.get("items", []) if isinstance(data, dict) else []
         if not nodes:
             break
         items.extend(nodes)

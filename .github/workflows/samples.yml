@@ -24,6 +24,7 @@ jobs:
           username: ${{ vars.SAMPLE_USERNAME || 'lucaskawatoko' }}
           data: repos
           color: "#3fb950"
+          seed: 42
           output: imgs/samples/snake-repos-green.gif
 
       - name: Generate sample (commits, azul calcinha)
@@ -33,6 +34,7 @@ jobs:
           data: commits
           color: "#aac8d6"
           food: "#e5534b"
+          seed: 42
           output: imgs/samples/snake-commits-azul-calcinha.gif
 
       - name: Generate sample (followers, roxo)
@@ -42,6 +44,7 @@ jobs:
           data: followers
           color: "#a371f7"
           food: "#3fb950"
+          seed: 42
           output: imgs/samples/snake-followers-roxo.gif
 
       - name: Commit samples

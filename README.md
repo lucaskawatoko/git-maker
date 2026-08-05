@@ -1,11 +1,22 @@
 # git-maker
 
+[![test](https://github.com/lucaskawatoko/git-maker/actions/workflows/test.yml/badge.svg)](https://github.com/lucaskawatoko/git-maker/actions/workflows/test.yml)
+
 Gera o GIF da **cobrinha** comendo os seus dados do GitHub (repositórios,
 contribuições ou seguidores), igualzinho ao famoso snake de contribuição — mas
 **totalmente personalizável**: cor da cobrinha e da comida em qualquer hex,
 com **fundo transparente** (o GIF se adapta ao tema do seu README) e com o seu
 **avatar na cabeça** da cobrinha. Tudo **dentro do GitHub Actions** — sem
 servidor, sem hosting.
+
+## Galeria
+
+Exemplos gerados pelo workflow [`samples.yml`](.github/workflows/samples.yml)
+com `seed: 42` (mesmo caminho a cada geração):
+
+| Repos (verde) | Commits (azul calcinha) | Seguidores (roxo) |
+| ------------- | ----------------------- | ----------------- |
+| ![repos](imgs/samples/snake-repos-green.gif) | ![commits](imgs/samples/snake-commits-azul-calcinha.gif) | ![seguidores](imgs/samples/snake-followers-roxo.gif) |
 
 ## Como usar
 
@@ -65,6 +76,8 @@ Depois é só referenciar no seu README:
 | `data`     | `repos`                | Comida da cobrinha: `repos`, `commits` ou `followers` |
 | `color`    | `#3fb950`              | Cor da cobrinha em hex (`#rrggbb`)                   |
 | `food`     | `#ff6b4a`              | Cor da comida em hex                                 |
+| `seed`     | —                      | Semente da simulação; vazio = caminho aleatório      |
+| `smooth`   | `true`                 | Movimento interpolado (mais fluido); `false` deixa o GIF menor |
 | `output`   | `imgs/contribution-animation.gif` | Caminho do GIF gerado                    |
 
 > O fundo é **transparente** — o GIF usa o fundo do seu README (claro ou
@@ -86,6 +99,23 @@ seu GIF muda todo dia (o cache-busting automático do `?v=` cuida do resto).
 Use `seed: 7` (ou qualquer número) no workflow para fixar um caminho
 específico e reproduzível. A abertura não tem título e o fim não faz fade
 para transparente, então não há "piscada" no loop do GIF.
+
+## Detalhes da animação
+
+- **Movimento interpolado**: com `smooth: true` (padrão) cada passo é
+  suavizado com sub-frames — a cobrinha desliza entre as células em vez de
+  teleportar. GIFs ficam maiores; use `smooth: false` para arquivo menor.
+- **Crescimento correto**: o planejador de caminho (BFS) sabe quando a
+  cobrinha vai crescer e evita atravessar a própria cauda parada.
+- **Comida por nível**: a comida escala de tamanho conforme o ranking do item
+  (1–4) em `repos`/`commits`. No fim aparece `CONCLUÍDO!` (comeu tudo) ou
+  `TEMPO LIMITE` (estourou o número de frames).
+- **Feedback ao comer**: cada comida solta um anel de expansão e um popup
+  `+N` com o valor ganho.
+- **Top 25**: só os 25 primeiros itens viram comida (GIF leve); o HUD mostra
+  `TOP 25: X/25` quando há mais dados e a CLI avisa na geração.
+- **Barra de progresso**: o HUD traz uma barra preenchida com o avanço da
+  cobrinha (`comidas / total`), na cor principal da paleta.
 
 ## Cores personalizadas
 

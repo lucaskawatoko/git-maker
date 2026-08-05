@@ -83,7 +83,7 @@ jobs:
           n_print = math.ceil(total / cpf)
           first = A._compose(W, H, A.PAD, cw, ch, row_imgs, cols, cpf)
           last = A._compose(W, H, A.PAD, cw, ch, row_imgs, cols, total)
-          ink = lambda img: sum(1 for p in img.convert("RGBA").get_flattened_data() if p[3] > 0)
+          ink = lambda img: sum(img.getchannel("A").histogram()[1:])
           assert ink(first) > 0 and ink(last) > ink(first), (ink(first), ink(last))
           assert grid and all(len(r) == cols for r in grid), "grade inválida"
           print("OK progressão ASCII", ink(first), "->", ink(last))

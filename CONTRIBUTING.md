@@ -46,6 +46,14 @@ generator/
 - `to_grid` converte o avatar (RGBA) em grade de caracteres pela luminância
   (rampa ` .:-=+*#%@`), com a proporção corrigida pela célula da fonte
   (DejaVuSansMono; altura da célula = `ascent`).
+- Antes de quantizar, `to_grid` corta ~10% das bordas (`crop`) e remove o fundo:
+  o fundo é estimado pela **mediana da borda da grade** e pixels dentro da
+  tolerância `bg_frac` viram espaço (fundo transparente). Isso é essencial —
+  o avatar costuma ser uma figura escura sobre fundo cinza-médio, e sem a
+  remoção o fundo vira ruído e a figura some com tinta clara.
+- `to_grid` detecta a **polaridade** (região central mais escura que o fundo ⇒
+  inverte a luminância) para a figura sempre virar tinta pesada da rampa,
+  independentemente do tema do avatar.
 - Cada linha é pré-renderizada uma vez; os frames mostram o "cabeçote"
   revelando caractere a caractere, de cima para baixo.
 - O último frame (foto completa) recebe uma `duration` maior para o hold —

@@ -75,7 +75,7 @@ def main(argv: list[str] | None = None) -> int:
                         help="dados que viram comida da cobrinha (repos, commits, followers)")
     parser.add_argument("--color", default=None,
                         help="cor da cobrinha/tinta em hex (padrão cobrinha: #3fb950; "
-                             "padrão ASCII: cinza-claro)")
+                             "padrão ASCII: cinza-médio #57606a, legível nos dois temas)")
     parser.add_argument("--food", default=None,
                         help="cor da comida em hex (padrão: #ff6b4a)")
     parser.add_argument("--output", default=DEFAULT_OUTPUT)

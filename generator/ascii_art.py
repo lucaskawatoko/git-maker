@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw
 from .render import FPS, load_font, save_gif_fixed
 
 RAMP = " .:-=+*#%@"  # escuro → claro
-DEFAULT_INK = (201, 209, 217, 255)  # cinza-claro neutro (funciona em temas claro/escuro)
+DEFAULT_INK = (87, 96, 106, 255)  # #57606a (GitHub muted): legível em temas claro/escuro
 PAD = 12
 FONT_SIZE = 12
 PRINT_SECONDS = 9.0
@@ -34,15 +34,54 @@ def mock_avatar(size: int = 200) -> Image.Image:
     return img.convert("RGBA")
 
 
-def to_grid(avatar: Image.Image, cols: int, char_w: float, char_h: float) -> list[str]:
-    """Converte a imagem em grade de caracteres, mantendo a proporção visual."""
+def to_grid(avatar: Image.Image, cols: int, char_w: float, char_h: float,
+            crop: float = 0.9, bg_frac: float = 0.10) -> list[str]:
+    """Converte a imagem em grade de caracteres, mantendo a proporção visual.
+
+    Fotos de avatar costumam ter a figura escura no centro sobre fundo
+    cinza-médio — o pior caso para uma rampa escuro→claro (o fundo vira ruído
+    e a figura some com tinta clara). Então: cortamos as bordas (crop),
+    estimamos o fundo pela borda da grade (mediana) e detectamos a polaridade
+    (se o centro é mais escuro que o fundo, invertemos para a figura virar
+    tinta pesada). Pixels próximos do fundo viram espaço (fundo transparente).
+    """
+    if crop and 0 < crop < 1:
+        w, h = avatar.size
+        s = int(min(w, h) * crop)
+        left, top = (w - s) // 2, (h - s) // 2
+        avatar = avatar.crop((left, top, left + s, top + s))
+
     rows = max(2, round(cols * char_w / char_h))
     img = avatar.resize((cols, rows), Image.LANCZOS).convert("RGB")
     pix = img.load()
-    lums = [_luminance(pix[x, y]) for y in range(rows) for x in range(cols)]
-    lo, hi = min(lums), max(lums)
-    return ["".join(_char_for(_luminance(pix[x, y]), lo, hi) for x in range(cols))
-            for y in range(rows)]
+    V = [[_luminance(pix[x, y]) for x in range(cols)] for y in range(rows)]
+
+    b = max(2, rows // 8)
+    border = [V[y][x] for y in range(rows) for x in range(cols)
+              if y < b or y >= rows - b or x < 2 or x >= cols - 2]
+    bg = sorted(border)[len(border) // 2]
+    center = [V[y][x] for y in range(rows // 4, 3 * rows // 4)
+              for x in range(cols // 4, 3 * cols // 4)]
+    invert = sum(center) / len(center) < bg
+
+    lo = min(min(r) for r in V)
+    hi = max(max(r) for r in V)
+    span = hi - lo or 1
+    bg_dev = max(12.0, bg_frac * span)
+    lo2, hi2 = (255 - hi, 255 - lo) if invert else (lo, hi)
+
+    lines = []
+    for y in range(rows):
+        row = []
+        for x in range(cols):
+            v = V[y][x]
+            if abs(v - bg) < bg_dev:
+                row.append(" ")
+            else:
+                vv = 255 - v if invert else v
+                row.append(_char_for(vv, lo2, hi2))
+        lines.append("".join(row))
+    return lines
 
 
 def _compose(W: int, H: int, pad: int, char_w: float, char_h: int,

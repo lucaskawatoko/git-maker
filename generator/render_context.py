@@ -26,3 +26,4 @@ class RenderContext:
     height: int = 420
     avatar: Image.Image | None = None
     avatars: dict = field(default_factory=dict)
+    seed: int | None = None

@@ -37,6 +37,19 @@ jobs:
             --output "/tmp/snake-followers.gif"
           test -s "/tmp/snake-followers.gif"
           echo "OK snake (followers)"
+      - name: Seeds diferentes geram caminhos diferentes
+        run: |
+          python -m generator --data repos --mock --seed 1 --output "/tmp/seed1.gif"
+          python -m generator --data repos --mock --seed 2 --output "/tmp/seed2.gif"
+          test -s "/tmp/seed1.gif" && test -s "/tmp/seed2.gif"
+          ! cmp -s /tmp/seed1.gif /tmp/seed2.gif
+          echo "OK seeds"
+      - name: Seed fixo é reproduzível
+        run: |
+          python -m generator --data repos --mock --seed 7 --output "/tmp/r1.gif"
+          python -m generator --data repos --mock --seed 7 --output "/tmp/r2.gif"
+          cmp -s /tmp/r1.gif /tmp/r2.gif
+          echo "OK seed reproduzível"
       - name: Fetch repos com paginação
         run: |
           python - <<'EOF'

@@ -29,6 +29,11 @@ generator/
   download falhar, cai para a cor derivada.
 - Em `followers`, cada comida é o **avatar do seguidor** (`api.load_image` +
   `ctx.avatars`); sem avatar, cai para o círculo da cor `food`.
+- A simulação é **seedável**: sem `--seed`, o caminho é aleatório a cada
+  execução (`random.Random(randrange)`); com `--seed N`, é reproduzível.
+- **Sem intro/outro com fade**: não há título na abertura nem fade para
+  transparente no fim (evita a "piscada" no loop do GIF); o jogo começa logo
+  e termina segurando o último frame.
 - O fundo é **transparente** (RGBA); só a borda da arena é desenhada. O GIF é
   salvo com índice de transparência (`render.save_gif` converte RGBA → P).
 - A paleta é derivada da `color` (hex) em `palettes.build_palette`, com a cor

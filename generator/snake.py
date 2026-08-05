@@ -21,23 +21,13 @@ HEIGHT = ROWS * CELL + GRID_Y + 34
 
 PLAY_ROW0 = 3  # linhas 0-2 são a faixa do HUD; a cobra/comida só jogam a partir daqui
 
-INTRO = 22
-OUTRO = 14
+INTRO = 10
+OUTRO = 6
 FPS = 24
 MAX_STEPS = 80
 MAX_TOTAL = 900
 MAX_ITEMS = 25  # limita a quantidade de alimentos para manter o GIF leve
 
-TITLES = {
-    "repos": "ASTRO SNAKE",
-    "commits": "ASTRO SNAKE",
-    "followers": "ASTRO SNAKE",
-}
-SUBTITLES = {
-    "repos": "seus repositórios viraram comida!",
-    "commits": "suas contribuições viraram comida!",
-    "followers": "seus seguidores viraram comida!",
-}
 HUD_LABELS = {"repos": "REPOS", "commits": "CONTRIB", "followers": "SEGUIDORES"}
 MAX_NAME = 14
 
@@ -237,22 +227,9 @@ def _draw_hud(draw: ImageDraw.ImageDraw, pal, state: dict, total: int,
               fill=pal["primary"] + (255,))
 
 
-def _draw_intro(draw: ImageDraw.ImageDraw, pal, i: int, data_name: str,
-                font_s, font_l) -> None:
-    if i >= INTRO:
-        return
-    title = TITLES[data_name]
-    tw = draw.textlength(title, font=font_l)
-    draw.text(((WIDTH - tw) / 2, 8), title, font=font_l, fill=pal["accent"] + (255,))
-    sub = SUBTITLES[data_name]
-    sw = draw.textlength(sub, font=font_s)
-    draw.text(((WIDTH - sw) / 2, GRID_Y + 12), sub, font=font_s,
-              fill=pal["primary"] + (255,))
-
-
 def render(ctx: RenderContext) -> None:
     ctx.width, ctx.height = WIDTH, HEIGHT
-    rng = random.Random(3)
+    rng = random.Random(ctx.seed if ctx.seed is not None else random.randrange(2**31))
     items = ctx.items[:MAX_ITEMS] if ctx.items else ctx.items
     if not items:
         items = [{"name": "sem dados", "count": 0, "level": 1}]
@@ -278,7 +255,6 @@ def render(ctx: RenderContext) -> None:
                        font_s, avatar_img)
         _draw_snake(draw, overlay, ctx.palette, state["body"], ctx.avatar)
         _draw_hud(draw, ctx.palette, state, len(items), font_s, font_l)
-        _draw_intro(draw, ctx.palette, i, ctx.data_name, font_s, font_l)
 
         if state["done"] and i >= INTRO:
             msg = "CONCLUÍDO!"
@@ -287,11 +263,6 @@ def render(ctx: RenderContext) -> None:
                       fill=ctx.palette["accent"] + (255,))
 
         frame = Image.alpha_composite(frame, overlay)
-
-        if i >= TOTAL - OUTRO:
-            t = min(1.0, (i - (TOTAL - OUTRO)) / OUTRO)
-            frame.putalpha(int(255 * (1 - t)))
-
         frames.append(frame)
 
     save_gif(frames, ctx.output, ctx.fps, ctx.preview)

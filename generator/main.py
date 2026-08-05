@@ -52,6 +52,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--food", default=None,
                         help="cor da comida em hex (padrão: #ff6b4a)")
     parser.add_argument("--output", default=DEFAULT_OUTPUT)
+    parser.add_argument("--seed", type=int, default=None,
+                        help="semente da simulação (padrão: aleatória a cada execução)")
     parser.add_argument("--mock", action="store_true",
                         help="usa dados fictícios em vez da API")
     parser.add_argument("--preview", action="store_true",
@@ -84,6 +86,7 @@ def main(argv: list[str] | None = None) -> int:
         preview=args.preview,
         avatar=avatar,
         avatars=avatars,
+        seed=args.seed,
     )
     render(ctx)
     size = os.path.getsize(args.output) / 1024

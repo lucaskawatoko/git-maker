@@ -79,6 +79,14 @@ Depois é só referenciar no seu README:
   "come" os seus seguidores, e cada um vale 1 ponto. Sem avatar, cai para o
   círculo da cor `food`.
 
+## Caminho aleatório a cada geração
+
+Sem o input `seed`, o caminho da cobrinha é **aleatório a cada execução** —
+seu GIF muda todo dia (o cache-busting automático do `?v=` cuida do resto).
+Use `seed: 7` (ou qualquer número) no workflow para fixar um caminho
+específico e reproduzível. A abertura não tem título e o fim não faz fade
+para transparente, então não há "piscada" no loop do GIF.
+
 ## Cores personalizadas
 
 Qualquer cor em hex funciona. A cabeça é derivada automaticamente da `color`

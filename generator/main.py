@@ -5,12 +5,14 @@ Uso:
     python -m generator [--user USUARIO] [--data repos|commits|followers]
                         [--color HEX] [--food HEX]
                         [--output PATH] [--mock] [--preview]
+                        [--smooth|--no-smooth] [--seed N]
 """
 
 from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
 
 from . import api
@@ -22,6 +24,13 @@ DEFAULT_USER = "lucaskawatoko"
 DEFAULT_COLOR = "#3fb950"
 DEFAULT_OUTPUT = "imgs/contribution-animation.gif"
 DATA_CHOICES = ("repos", "commits", "followers")
+
+_HEX_RE = re.compile(r"^#?[0-9a-fA-F]{6}$")
+
+
+def _check_hex(value: str | None, flag: str) -> None:
+    if value is not None and not _HEX_RE.match(value):
+        raise SystemExit(f"{flag} deve ser #rrggbb (ex.: #3fb950); recebido: {value!r}")
 
 
 def _load_items(args, username: str, token: str | None) -> list[dict]:
@@ -58,12 +67,23 @@ def main(argv: list[str] | None = None) -> int:
                         help="usa dados fictícios em vez da API")
     parser.add_argument("--preview", action="store_true",
                         help="salva também um PNG do primeiro frame")
+    parser.add_argument("--smooth", dest="smooth", action="store_true", default=None,
+                        help="movimento interpolado (padrão: ligado)")
+    parser.add_argument("--no-smooth", dest="smooth", action="store_false",
+                        help="movimento em passos, sem interpolação")
+    parser.set_defaults(smooth=True)
     args = parser.parse_args(argv)
+
+    _check_hex(args.color, "--color")
+    _check_hex(args.food, "--food")
 
     token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
     username = args.user or os.environ.get("GH_USER") or DEFAULT_USER
 
     items = _load_items(args, username, token)
+    if len(items) > MAX_ITEMS:
+        print(f"Aviso: exibindo top {MAX_ITEMS} de {len(items)} itens.",
+              file=sys.stderr)
     palette = build_palette(args.color or DEFAULT_COLOR, args.food)
 
     avatar = None
@@ -88,6 +108,8 @@ def main(argv: list[str] | None = None) -> int:
         avatar=avatar,
         avatars=avatars,
         seed=args.seed,
+        total_items=len(items),
+        smooth=args.smooth,
     )
     render(ctx)
     size = os.path.getsize(args.output) / 1024

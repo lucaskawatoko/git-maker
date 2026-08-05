@@ -4,9 +4,8 @@ Gera o GIF da **cobrinha** comendo os seus dados do GitHub (repositórios,
 contribuições ou seguidores), igualzinho ao famoso snake de contribuição — mas
 **totalmente personalizável**: cor da cobrinha e da comida em qualquer hex,
 com **fundo transparente** (o GIF se adapta ao tema do seu README) e com o seu
-**avatar na cabeça** da cobrinha. Também gera a sua **foto em ASCII art** com
-efeito de impressão. Tudo **dentro do GitHub Actions** — sem servidor, sem
-hosting.
+**avatar na cabeça** da cobrinha. Tudo **dentro do GitHub Actions** — sem
+servidor, sem hosting.
 
 ## Como usar
 
@@ -57,29 +56,6 @@ Depois é só referenciar no seu README:
 > Para `data: commits` (contribuições) a action usa a API GraphQL, que exige
 > um token. Sem token, as contribuições caem para dados fictícios. Defina o
 > secret `GH_TOKEN` no repositório para usar dados reais.
-
-## Foto ASCII (efeito de impressão)
-
-Além da cobrinha, o `git-maker` converte o seu **avatar em ASCII art**
-monocromático com efeito de "impressão": o GIF revela a grade caractere a
-caractere, de cima para baixo, segura a foto completa por 1,5s e repete o
-loop. Fundo transparente e tinta cinza-claro (`#c9d1d9`) que funciona em tema
-claro e escuro.
-
-Adicione a action no seu workflow:
-
-```yaml
-      - name: Generate ASCII photo
-        uses: lucaskawatoko/git-maker/.github/actions/ascii-printer@main
-        with:
-          username: "lucaskawatoko"  # seu usuário
-          width: "56"                # largura da grade (altura é automática)
-          # color: "#aac8d6"         # cor da tinta (hex); vazio = cinza claro
-```
-
-```markdown
-![ascii](imgs/profile-ascii.gif)
-```
 
 ## Inputs
 
@@ -146,13 +122,6 @@ python -m generator --user lucaskawatoko --data commits \
 # cobrinha roxa comendo seguidores (com avatar na cabeça)
 python -m generator --user lucaskawatoko --data followers \
   --color "#a371f7" --food "#3fb950"
-
-# foto ASCII do avatar (efeito de impressão)
-python -m generator --ascii --user lucaskawatoko
-
-# foto ASCII com tinta azul e grade de 80 colunas
-python -m generator --ascii --user lucaskawatoko \
-  --color "#aac8d6" --width 80 --output imgs/profile-ascii.gif
 ```
 
 ## Licença

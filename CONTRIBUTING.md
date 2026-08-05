@@ -6,11 +6,10 @@ Obrigado por ajudar o git-maker! Projeto propositalmente enxuto.
 
 ```
 generator/
-  main.py            # CLI: --user --data --color --food --output --mock --preview --ascii --width
+  main.py            # CLI: --user --data --color --food --output --mock --preview
   api.py             # busca de repos (REST) / contribuições (GraphQL) / seguidores (REST) + avatares
   palettes.py        # deriva a paleta (cobra, comida) a partir de cores hex
   snake.py           # o jogo: cobrinha auto-play (BFS) comendo os dados
-  ascii_art.py       # foto ASCII: avatar -> grade -> GIF com efeito de impressão
   render.py          # utilidades: fontes e gravação do GIF (com transparência)
   render_context.py  # contexto compartilhado entre camadas
 ```
@@ -41,36 +40,6 @@ generator/
   da comida (`food`) sobreponível.
 - `MAX_ITEMS = 25` limita a comida para o GIF ficar leve.
 
-## Foto ASCII (`ascii_art.py`)
-
-- `to_grid` converte o avatar (RGBA) em grade de caracteres pela luminância
-  (rampa ` .:-=+*#%@`), com a proporção corrigida pela célula da fonte
-  (DejaVuSansMono; altura da célula = `ascent`).
-- Antes de quantizar, `to_grid` corta ~10% das bordas (`crop`) e remove o fundo:
-  o fundo é estimado pela **mediana da borda da grade** e pixels dentro da
-  tolerância `bg_frac` viram espaço (fundo transparente). Isso é essencial —
-  o avatar costuma ser uma figura escura sobre fundo cinza-médio, e sem a
-  remoção o fundo vira ruído e a figura some com tinta clara.
-- `to_grid` detecta a **polaridade** (região central mais escura que o fundo ⇒
-  inverte a luminância) para a figura sempre virar tinta pesada da rampa,
-  independentemente do tema do avatar.
-- Com `dither=True` (padrão), os tons da figura são quantizados com
-  **Floyd–Steinberg** (aperiódico): a foto vira uma textura pontilhada em vez
-  de traço fino. O Bayer 4×4 foi descartado — sua periodicidade cria listras
-  diagonais que afogam o rosto.
-- Cada linha é pré-renderizada uma vez; os frames mostram o "cabeçote"
-  revelando caractere a caractere, de cima para baixo.
-- O último frame (foto completa) recebe uma `duration` maior para o hold —
-  **nunca** use frames duplicados no fim: o Pillow os mescla e corrompe o GIF
-  transparente.
-- O GIF é salvo com **paleta global fixa** (`render.save_gif_fixed`): quantizar
-  cada frame isolado corrompe as cores quando a cor dominante muda entre
-  frames. Use-o para GIFs transparentes; `save_gif` (quantize por frame) serve
-  para GIFs opacos (a cobrinha).
-- Não há fade-out: o loop corta da foto completa de volta para o começo da
-  impressão (sem piscada). O Pillow corrompe o arquivo se frames com
-  transparência parcial (`putalpha`) aparecem no fim.
-
 ## Validar
 
 ```bash
@@ -80,8 +49,7 @@ python -m generator --data followers --mock --preview
 
 Testes de CI (`.github/workflows/test.yml`) renderizam a cobrinha com dados
 fictícios nas versões 3.9, 3.11 e 3.12 do Python, incluindo cores hex,
-seguidores, paginação de `fetch_repos`/`fetch_followers` e a progressão da
-foto ASCII.
+seguidores e a paginação de `fetch_repos`/`fetch_followers`.
 
 ## Convenções
 

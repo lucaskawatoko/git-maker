@@ -50,44 +50,6 @@ jobs:
           python -m generator --data repos --mock --seed 7 --output "/tmp/r2.gif"
           cmp -s /tmp/r1.gif /tmp/r2.gif
           echo "OK seed reproduzível"
-      - name: Render ASCII photo (mock)
-        run: |
-          python -m generator --ascii --mock --preview \
-            --output "/tmp/ascii.gif"
-          test -s "/tmp/ascii.gif"
-          echo "OK ascii (mock)"
-      - name: ASCII revela a grade progressivamente
-        run: |
-          python - <<'EOF'
-          import math
-          from PIL import Image, ImageDraw
-          from generator import ascii_art as A
-          from generator.render import load_font
-
-          font = load_font(A.FONT_SIZE)
-          ascent = font.getmetrics()[0]
-          cw = ImageDraw.Draw(Image.new("RGBA", (4, 4))).textlength("M", font=font)
-          ch = ascent
-          grid = A.to_grid(A.mock_avatar(), 56, cw, ch)
-          rows = len(grid)
-          cols = 56
-          W = int(cols * cw) + 2 * A.PAD
-          H = rows * ch + 2 * A.PAD
-          row_imgs = []
-          for row in grid:
-              s = Image.new("RGBA", (int(cols * cw), ch), (0, 0, 0, 0))
-              ImageDraw.Draw(s).text((0, 0), row, font=font, fill=A.DEFAULT_INK)
-              row_imgs.append(s)
-          total = cols * rows
-          cpf = max(1, total // int(24 * A.PRINT_SECONDS))
-          n_print = math.ceil(total / cpf)
-          first = A._compose(W, H, A.PAD, cw, ch, row_imgs, cols, cpf)
-          last = A._compose(W, H, A.PAD, cw, ch, row_imgs, cols, total)
-          ink = lambda img: sum(img.getchannel("A").histogram()[1:])
-          assert ink(first) > 0 and ink(last) > ink(first), (ink(first), ink(last))
-          assert grid and all(len(r) == cols for r in grid), "grade inválida"
-          print("OK progressão ASCII", ink(first), "->", ink(last))
-          EOF
       - name: Fetch repos com paginação
         run: |
           python - <<'EOF'

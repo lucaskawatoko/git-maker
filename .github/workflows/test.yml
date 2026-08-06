@@ -37,6 +37,46 @@ jobs:
             --output "/tmp/snake-followers.gif"
           test -s "/tmp/snake-followers.gif"
           echo "OK snake (followers)"
+      - name: Render breakout com dados mock
+        run: |
+          python -m generator --game breakout --data repos --mock --preview \
+            --output "/tmp/breakout.gif"
+          test -s "/tmp/breakout.gif"
+          echo "OK breakout (repos)"
+      - name: Render breakout no-smooth
+        run: |
+          python -m generator --game breakout --data commits --mock --no-smooth \
+            --output "/tmp/breakout-ns.gif"
+          test -s "/tmp/breakout-ns.gif"
+          echo "OK breakout (no-smooth)"
+      - name: Breakout quebra todas as peças e soma os counts
+        run: |
+          python - <<'EOF'
+          import random
+          from generator.games.breakout import simulate
+
+          items = [{"name": f"b{i}", "count": 10 - i, "level": 1} for i in range(5)]
+          states = simulate(items, random.Random(3))
+          assert states[-1]["finished"] is True, "deveria quebrar todas as peças"
+          assert all(not b["alive"] for b in states[-1]["bricks"]), "restou peça viva"
+          n = sum(1 for s in states for _ in s["events"])
+          assert n == len(items), f"um eat por peça, veio {n}"
+          assert states[-1]["score"] == sum(i["count"] for i in items), states[-1]["score"]
+          print("OK breakout simulate")
+          EOF
+      - name: Breakout com seed fixo é reproduzível
+        run: |
+          python -m generator --game breakout --data repos --mock --seed 7 --output "/tmp/bo1.gif"
+          python -m generator --game breakout --data repos --mock --seed 7 --output "/tmp/bo2.gif"
+          cmp -s /tmp/bo1.gif /tmp/bo2.gif
+          echo "OK breakout seed"
+      - name: Seeds diferentes geram trajetórias diferentes
+        run: |
+          python -m generator --game breakout --data repos --mock --seed 1 --output "/tmp/bos1.gif"
+          python -m generator --game breakout --data repos --mock --seed 2 --output "/tmp/bos2.gif"
+          test -s "/tmp/bos1.gif" && test -s "/tmp/bos2.gif"
+          ! cmp -s /tmp/bos1.gif /tmp/bos2.gif
+          echo "OK breakout seeds diferentes"
       - name: Seeds diferentes geram caminhos diferentes
         run: |
           python -m generator --data repos --mock --seed 1 --output "/tmp/seed1.gif"

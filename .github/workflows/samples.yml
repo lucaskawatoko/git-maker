@@ -47,6 +47,17 @@ jobs:
           seed: 42
           output: imgs/samples/snake-followers-roxo.gif
 
+      - name: Generate sample (breakout, repos, amarelo)
+        uses: ./.github/actions/generate-gifs
+        with:
+          username: ${{ vars.SAMPLE_USERNAME || 'lucaskawatoko' }}
+          data: repos
+          game: breakout
+          color: "#e3b341"
+          food: "#e5534b"
+          seed: 42
+          output: imgs/samples/breakout-repos-amarelo.gif
+
       - name: Commit samples
         run: |
           git config user.name "github-actions[bot]"

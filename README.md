@@ -2,21 +2,21 @@
 
 [![test](https://github.com/lucaskawatoko/git-maker/actions/workflows/test.yml/badge.svg)](https://github.com/lucaskawatoko/git-maker/actions/workflows/test.yml)
 
-Gera o GIF da **cobrinha** comendo os seus dados do GitHub (repositórios,
-contribuições ou seguidores), igualzinho ao famoso snake de contribuição — mas
-**totalmente personalizável**: cor da cobrinha e da comida em qualquer hex,
-com **fundo transparente** (o GIF se adapta ao tema do seu README) e com o seu
-**avatar na cabeça** da cobrinha. Tudo **dentro do GitHub Actions** — sem
-servidor, sem hosting.
+Gera o GIF de um **mini-game** com os seus dados do GitHub (repositórios,
+contribuições ou seguidores): a cobrinha (Snake) comendo os dados ou o
+**Breakout** quebrando blocos. Totalmente personalizável: cor do jogo e da
+comida em qualquer hex, com **fundo transparente** (o GIF se adapta ao tema do
+seu README) e com o seu **avatar** na cabeça da cobrinha ou na raquete. Tudo
+**dentro do GitHub Actions** — sem servidor, sem hosting.
 
 ## Galeria
 
 Exemplos gerados pelo workflow [`samples.yml`](.github/workflows/samples.yml)
 com `seed: 42` (mesmo caminho a cada geração):
 
-| Repos (verde) | Commits (azul calcinha) | Seguidores (roxo) |
-| ------------- | ----------------------- | ----------------- |
-| ![repos](imgs/samples/snake-repos-green.gif) | ![commits](imgs/samples/snake-commits-azul-calcinha.gif) | ![seguidores](imgs/samples/snake-followers-roxo.gif) |
+| Repos (verde, snake) | Commits (azul calcinha) | Seguidores (roxo) | Repos (amarelo, breakout) |
+| -------------------- | ----------------------- | ----------------- | ------------------------- |
+| ![repos](imgs/samples/snake-repos-green.gif) | ![commits](imgs/samples/snake-commits-azul-calcinha.gif) | ![seguidores](imgs/samples/snake-followers-roxo.gif) | ![breakout](imgs/samples/breakout-repos-amarelo.gif) |
 
 ## Como usar
 
@@ -46,7 +46,8 @@ jobs:
         with:
           username: "lucaskawatoko"  # seu usuário
           data: "repos"              # repos, commits ou followers
-          color: "#aac8d6"           # cor da cobrinha (hex)
+          game: "snake"              # snake ou breakout
+          color: "#aac8d6"           # cor do jogo (hex)
           food: "#e5534b"            # cor da comida (hex)
 
       - name: Commit
@@ -73,8 +74,9 @@ Depois é só referenciar no seu README:
 | Input      | Padrão                 | Descrição                                            |
 | ---------- | ---------------------- | ---------------------------------------------------- |
 | `username` | `lucaskawatoko`        | Usuário do GitHub com os dados                       |
-| `data`     | `repos`                | Comida da cobrinha: `repos`, `commits` ou `followers` |
-| `color`    | `#3fb950`              | Cor da cobrinha em hex (`#rrggbb`)                   |
+| `data`     | `repos`                | Comida do jogo: `repos`, `commits` ou `followers`    |
+| `game`     | `snake`                | Estilo do jogo: `snake` ou `breakout`                |
+| `color`    | `#3fb950`              | Cor do jogo em hex (`#rrggbb`)                       |
 | `food`     | `#ff6b4a`              | Cor da comida em hex                                 |
 | `seed`     | —                      | Semente da simulação; vazio = caminho aleatório      |
 | `smooth`   | `true`                 | Movimento interpolado (mais fluido); `false` deixa o GIF menor |
@@ -116,6 +118,9 @@ para transparente, então não há "piscada" no loop do GIF.
   `TOP 25: X/25` quando há mais dados e a CLI avisa na geração.
 - **Barra de progresso**: o HUD traz uma barra preenchida com o avanço da
   cobrinha (`comidas / total`), na cor principal da paleta.
+- **Breakout**: com `game: breakout` a bolinha quebra os blocos (um por dado);
+  a raquete é o seu avatar (auto-play) e a bolinha tem "pontaria" reflexiva na
+  próxima peça — jogo determinístico que sempre termina `CONCLUÍDO!`.
 
 ## Cores personalizadas
 
@@ -152,6 +157,9 @@ python -m generator --user lucaskawatoko --data commits \
 # cobrinha roxa comendo seguidores (com avatar na cabeça)
 python -m generator --user lucaskawatoko --data followers \
   --color "#a371f7" --food "#3fb950"
+
+# breakout quebrando seus repos
+python -m generator --game breakout --mock
 ```
 
 ## Licença

@@ -6,21 +6,28 @@ Obrigado por ajudar o git-maker! Projeto propositalmente enxuto.
 
 ```
 generator/
-  main.py            # CLI: --user --data --color --food --output --mock --preview --smooth/--no-smooth
-  api.py             # busca de repos (REST) / contribuições (GraphQL) / seguidores (REST) + avatares
-  palettes.py        # deriva a paleta (cobra, comida) a partir de cores hex
-  snake.py           # o jogo: cobrinha auto-play (BFS) comendo os dados
+  main.py            # CLI: --user --data --game --color --food --output --mock --preview --smooth/--no-smooth
+  api.py             # busca de repos (Search API) / contribuições (GraphQL) / seguidores (REST) + avatares
+  palettes.py        # deriva a paleta (jogo, comida) a partir de cores hex
+  snake.py           # jogo Snake: cobrinha auto-play (BFS) comendo os dados
+  games/
+    __init__.py      # cada jogo expõe render(ctx) e simulate(items, rng)
+    breakout.py      # jogo Breakout: bolinha quebra blocos, raquete auto-play
   render.py          # utilidades: fontes e gravação do GIF (com transparência)
   render_context.py  # contexto compartilhado entre camadas
 ```
 
-## Como o jogo funciona
+## Como um jogo funciona
 
+- Todo jogo expõe `render(ctx)` com a mesma assinatura (`main.py` despacha pelo
+  `--game`) e, quando tem lógica testável, `simulate(items, rng)` determinístico.
 - Cada item (repositório, semana de contribuição ou seguidor) vira uma comida
-  na grade.
-- A cobrinha é auto-play: `find_path` usa BFS para ir até a comida; o `count`
-  de cada item soma no SCORE (estrelas em `repos`, contribuições em `commits`,
-  1 ponto por seguidor).
+  na grade (`snake`) ou um bloco a quebrar (`breakout`); o `count` soma no
+  SCORE (estrelas em `repos`, contribuições em `commits`, 1 ponto por seguidor).
+- O fim distingue **`CONCLUÍDO!`** (zerou todos os itens) de **`TEMPO LIMITE`**
+  (estourou o teto de passos): o último estado guarda `finished`.
+- O HUD (SCORE + `TOP 25: X/25` + barra de progresso) é o `_draw_hud` do
+  `snake.py`, reaproveitado pelo breakout.
 - A cobrinha **cresce** a cada comida (`pending += 1` no `simulate`). O BFS
   recebe `growing = pending > 0`: enquanto a cobra cresce a cauda não sai na
   jogada, então ela é tratada como célula ocupada — evita planejar caminho que
@@ -64,12 +71,13 @@ generator/
 python -m generator --mock --preview
 python -m generator --data followers --mock --preview
 python -m generator --mock --no-smooth --preview
+python -m generator --game breakout --mock --preview
 ```
 
-Testes de CI (`.github/workflows/test.yml`) renderizam a cobrinha com dados
-fictícios nas versões 3.9, 3.11 e 3.12 do Python, incluindo cores hex,
-seguidores, smooth/no-smooth, `finished`, `_spawn_food` com exclusão e a
-paginação de `fetch_repos`/`fetch_followers`.
+Testes de CI (`.github/workflows/test.yml`) renderizam a cobrinha e o breakout
+com dados fictícios nas versões 3.9, 3.11 e 3.12 do Python, incluindo cores
+hex, seguidores, smooth/no-smooth, `finished`, `_spawn_food` com exclusão, a
+quebra completa do breakout e a paginação de `fetch_repos`/`fetch_followers`.
 
 ## Convenções
 

@@ -6,7 +6,7 @@ Gera o GIF de um **mini-game** com os seus dados do GitHub (repositórios,
 contribuições ou seguidores): a cobrinha (Snake) comendo os dados ou o
 **Breakout** quebrando blocos. Totalmente personalizável: cor do jogo e da
 comida em qualquer hex, com **fundo transparente** (o GIF se adapta ao tema do
-seu README) e com o seu **avatar** na cabeça da cobrinha ou na raquete. Tudo
+seu README) e com o seu **avatar na cabeça** da cobrinha. Tudo
 **dentro do GitHub Actions** — sem servidor, sem hosting.
 
 ## Galeria
@@ -119,8 +119,9 @@ para transparente, então não há "piscada" no loop do GIF.
 - **Barra de progresso**: o HUD traz uma barra preenchida com o avanço da
   cobrinha (`comidas / total`), na cor principal da paleta.
 - **Breakout**: com `game: breakout` a bolinha quebra os blocos (um por dado);
-  a raquete é o seu avatar (auto-play) e a bolinha tem "pontaria" reflexiva na
-  próxima peça — jogo determinístico que sempre termina `CONCLUÍDO!`.
+  a raquete é auto-play, fica presa dentro da arena e a bolinha tem "pontaria"
+  reflexiva na próxima peça — jogo determinístico que sempre termina
+  `CONCLUÍDO!`.
 
 ## Cores personalizadas
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Estilo Breakout: a bolinha quebra os blocos (um por dado do usuário),
-o avatar do usuário é a raquete (auto-play) e cada bloco solta seu `count`
-no SCORE. A bolinha é "rebatida" pela raquete com pontaria na próxima
-peça — determinístico e sempre termina `CONCLUÍDO!`."""
+a raquete é auto-play e cada bloco solta seu `count` no SCORE. A bolinha é
+"rebatida" pela raquete com pontaria na próxima peça — determinístico e
+sempre termina `CONCLUÍDO!`."""
 
 from __future__ import annotations
 
@@ -154,7 +154,7 @@ def simulate(items: list[dict], rng: random.Random) -> list[dict]:
             else:
                 vx = vy = 0.0
         ball = (bx, by)
-        x = bx
+        x = min(max(bx, PLAY_X0 + PADDLE_W / 2), PLAY_X1 - PADDLE_W / 2)
         return events
 
     if any(b["alive"] for b in bricks):
@@ -218,20 +218,12 @@ def _draw_ball(draw: ImageDraw.ImageDraw, pal, ball: tuple[float, float]) -> Non
                  fill=pal["secondary"] + (255,), outline=(255, 255, 255, 200))
 
 
-def _draw_paddle(draw: ImageDraw.ImageDraw, overlay: Image.Image, pal,
-                 paddle_x: float, avatar=None) -> None:
+def _draw_paddle(draw: ImageDraw.ImageDraw, pal, paddle_x: float) -> None:
     x0 = paddle_x - PADDLE_W / 2
     y0, y1 = PADDLE_TOP, PADDLE_TOP + PADDLE_H
     rect = (int(x0), y0, int(x0 + PADDLE_W), y1)
-    if avatar is not None:
-        img = avatar.resize((PADDLE_W, PADDLE_H), Image.LANCZOS)
-        mask = Image.new("L", (PADDLE_W, PADDLE_H), 0)
-        ImageDraw.Draw(mask).rounded_rectangle((0, 0, PADDLE_W - 1, PADDLE_H - 1),
-                                               radius=5, fill=255)
-        overlay.paste(img, (rect[0], rect[1]), mask)
-    else:
-        draw.rounded_rectangle(rect, radius=5, fill=pal["secondary"] + (255,),
-                               outline=(255, 255, 255, 180))
+    draw.rounded_rectangle(rect, radius=5, fill=pal["secondary"] + (255,),
+                           outline=(255, 255, 255, 180))
 
 
 def _draw_anims(draw: ImageDraw.ImageDraw, anims: list[dict], font, pal) -> None:
@@ -292,7 +284,7 @@ def render(ctx: RenderContext) -> None:
 
             _draw_bricks(draw, ctx.palette, b["bricks"], font_xs, ctx.avatars)
             _draw_ball(draw, ctx.palette, ball)
-            _draw_paddle(draw, overlay, ctx.palette, paddle_x, ctx.avatar)
+            _draw_paddle(draw, ctx.palette, paddle_x)
             _draw_hud(draw, ctx.palette, a, len(items), font_s, font_l, truncated)
             _draw_anims(draw, anims, font_l, ctx.palette)
 
@@ -315,7 +307,7 @@ def render(ctx: RenderContext) -> None:
         draw = ImageDraw.Draw(overlay)
         _draw_bricks(draw, ctx.palette, s0["bricks"], font_xs, ctx.avatars)
         _draw_ball(draw, ctx.palette, s0["ball"])
-        _draw_paddle(draw, overlay, ctx.palette, s0["paddle_x"], ctx.avatar)
+        _draw_paddle(draw, ctx.palette, s0["paddle_x"])
         _draw_hud(draw, ctx.palette, s0, len(items), font_s, font_l, truncated)
         frames.append(Image.alpha_composite(frame, overlay))
 

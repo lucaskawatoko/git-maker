@@ -19,14 +19,14 @@ def load_font(size: int) -> ImageFont.ImageFont:
     return ImageFont.load_default()
 
 
-def _to_palette_rgba(img: Image.Image) -> Image.Image:
-    """Converte RGBA → P (255 cores + índice 255 = transparente) para GIF.
+def _to_palette_rgba(img: Image.Image, colors: int) -> Image.Image:
+    """Converte RGBA → P (`colors` cores + índice 255 = transparente) para GIF.
 
-    Quantiza o RGB em 255 cores e usa o índice 255 como canal de transparência
-    (pixels com alpha < 128 viram transparentes).
+    Quantiza o RGB em `colors` cores e usa o índice 255 como canal de
+    transparência (pixels com alpha < 128 viram transparentes).
     """
     rgb = img.convert("RGB")
-    pal = rgb.quantize(colors=255, method=Image.Quantize.MEDIANCUT)
+    pal = rgb.quantize(colors=colors, method=Image.Quantize.MEDIANCUT)
     mask = img.getchannel("A").point(lambda a: 255 if a < 128 else 0)
     pal.paste(255, (0, 0, pal.width, pal.height), mask)
     pal.info["transparency"] = 255
@@ -34,16 +34,19 @@ def _to_palette_rgba(img: Image.Image) -> Image.Image:
 
 
 def save_gif(frames: list[Image.Image], output: str, fps: int, preview: bool,
-             optimize: bool = True) -> None:
+             optimize: bool = True, colors: int = 255) -> None:
     if not frames:
         raise SystemExit("Nenhum frame gerado.")
     os.makedirs(os.path.dirname(output) or ".", exist_ok=True)
     if preview:
-        frames[0].save(output.replace(".gif", ".png"))
+        png = output if output.endswith(".png") else output.replace(".gif", ".png")
+        frames[0].save(png)
+        if output.endswith(".png"):
+            return
 
     transparent = frames[0].mode == "RGBA"
     if transparent:
-        frames = [_to_palette_rgba(f) for f in frames]
+        frames = [_to_palette_rgba(f, colors) for f in frames]
         transparency = frames[0].info.get("transparency")
     else:
         transparency = None

@@ -3,6 +3,7 @@
 
 Uso:
     python -m generator [--user USUARIO] [--data repos|commits|followers]
+                        [--game snake|breakout]
                         [--color HEX] [--food HEX]
                         [--output PATH] [--mock] [--preview]
                         [--smooth|--no-smooth] [--seed N]
@@ -16,14 +17,17 @@ import re
 import sys
 
 from . import api
+from .games.breakout import render as render_breakout
 from .palettes import build_palette
 from .render_context import RenderContext
-from .snake import MAX_ITEMS, render
+from .snake import MAX_ITEMS, render as render_snake
 
 DEFAULT_USER = "lucaskawatoko"
 DEFAULT_COLOR = "#3fb950"
 DEFAULT_OUTPUT = "imgs/contribution-animation.gif"
 DATA_CHOICES = ("repos", "commits", "followers")
+GAME_CHOICES = ("snake", "breakout")
+GAMES = {"snake": render_snake, "breakout": render_breakout}
 
 _HEX_RE = re.compile(r"^#?[0-9a-fA-F]{6}$")
 
@@ -55,7 +59,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--user", "--username", dest="user", default=None,
                         help=f"usuário do GitHub (padrão: GH_USER ou {DEFAULT_USER})")
     parser.add_argument("--data", choices=DATA_CHOICES, default="repos",
-                        help="dados que viram comida da cobrinha (repos, commits, followers)")
+                        help="dados que viram comida do jogo (repos, commits, followers)")
+    parser.add_argument("--game", choices=GAME_CHOICES, default="snake",
+                        help="estilo do jogo: snake ou breakout (padrão: snake)")
     parser.add_argument("--color", default=None,
                         help="cor da cobrinha em hex (padrão: #3fb950)")
     parser.add_argument("--food", default=None,
@@ -111,7 +117,8 @@ def main(argv: list[str] | None = None) -> int:
         total_items=len(items),
         smooth=args.smooth,
     )
-    render(ctx)
+    render_game = GAMES[args.game]
+    render_game(ctx)
     size = os.path.getsize(args.output) / 1024
     print(f"GIF gerado em {args.output} ({size:.0f} KB, {ctx.width}x{ctx.height}) "
           f"para @{username} ({len(items)} itens)")

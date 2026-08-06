@@ -14,6 +14,10 @@ inputs:
     description: "Dados que viram comida: repos (repositórios), commits (contribuições) ou followers (seguidores)."
     required: false
     default: "repos"
+  game:
+    description: "Estilo do jogo: snake (cobrinha) ou breakout (quebra-blocos)."
+    required: false
+    default: "snake"
   color:
     description: "Cor da cobrinha em hex (#rrggbb), ex: #aac8d6 (azul calcinha)."
     required: false
@@ -62,6 +66,7 @@ runs:
         python -m generator \
           --user "$INPUT_USERNAME" \
           --data "$INPUT_DATA" \
+          --game "$INPUT_GAME" \
           --color "$INPUT_COLOR" \
           --food "$INPUT_FOOD" \
           "${SEED_ARGS[@]}" \
@@ -71,6 +76,7 @@ runs:
       env:
         INPUT_USERNAME: ${{ inputs.username }}
         INPUT_DATA: ${{ inputs.data }}
+        INPUT_GAME: ${{ inputs.game }}
         INPUT_COLOR: ${{ inputs.color }}
         INPUT_FOOD: ${{ inputs.food }}
         INPUT_OUTPUT: ${{ inputs.output }}

@@ -6,9 +6,10 @@ sempre termina `CONCLUÍDO!`."""
 
 from __future__ import annotations
 
+import math
 import random
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 from ..render import load_font, save_gif
 from ..render_context import RenderContext
@@ -19,10 +20,10 @@ PLAY_X0, PLAY_X1 = GRID_X, WIDTH - GRID_X
 
 BRICK_COLS = 5
 BRICK_ROWS = 5
-BRICK_GAP = 10
-BRICK_H = 22
-BRICK_TOP = GRID_Y + 70
-ROW_PITCH = BRICK_H + 8
+BRICK_GAP = 12
+BRICK_H = 20
+BRICK_TOP = GRID_Y + 74
+ROW_PITCH = BRICK_H + 12
 
 PADDLE_W = 90
 PADDLE_H = 12
@@ -31,6 +32,9 @@ PADDLE_TOP = HEIGHT - 46
 BALL_R = 7
 SPEED = 22.0  # pixels por passo de simulação
 
+TRAIL = 6      # quantos pontos de rastro a bolinha deixa
+TRAIL_ALPHA = 90
+
 INTRO = 10
 OUTRO = 8
 MAX_STEPS = 1400
@@ -38,6 +42,15 @@ MAX_STEPS = 1400
 SMOOTH = 2
 ANIM_FRAMES = 14
 MAX_RENDER_FRAMES = 600
+
+# Cor de destaque por linha de blocos (topo → base): dá um degradê "arcade".
+ROW_HUES = (
+    (255, 92, 92),    # vermelho
+    (255, 159, 64),   # laranja
+    (255, 214, 89),   # amarelo
+    (110, 231, 183),  # verde-água
+    (129, 161, 255),  # azul
+)
 
 
 def _brick_rect(i: int) -> tuple[int, int, int, int]:
@@ -57,6 +70,7 @@ def _build_bricks(items: list[dict]) -> list[dict]:
             "name": item["name"],
             "count": item["count"],
             "level": item.get("level", 1),
+            "row": (i // BRICK_COLS) % len(ROW_HUES),
             "rect": (x0, y0, x1, y1),
             "alive": True,
         })
@@ -110,16 +124,17 @@ def simulate(items: list[dict], rng: random.Random) -> list[dict]:
     idx = 0
     eaten = 0
     score = 0
+    trail: list[tuple[float, float]] = []
 
     def make(done: bool = False) -> dict:
         return dict(ball=ball, v=(vx, vy), paddle_x=x, bricks=[dict(b) for b in bricks],
                     idx=idx, eaten=eaten, score=score, done=done, finished=False,
-                    events=[])
+                    events=[], trail=list(trail))
 
     states = [make() for _ in range(INTRO)]
 
     def advance() -> list[dict]:
-        nonlocal ball, vx, vy, x, idx, eaten, score
+        nonlocal ball, vx, vy, x, idx, eaten, score, trail
         bx, by = ball
         bx += vx
         by += vy
@@ -134,7 +149,8 @@ def simulate(items: list[dict], rng: random.Random) -> list[dict]:
             if not b["alive"] or not _hit_brick(b, bx, by):
                 continue
             b["alive"] = False
-            events.append({"gain": b["count"], "rect": b["rect"], "name": b["name"]})
+            events.append({"gain": b["count"], "rect": b["rect"], "name": b["name"],
+                           "row": b["row"]})
             eaten += 1
             score += b["count"]
             bx0, by0, bx1, by1 = b["rect"]
@@ -154,6 +170,9 @@ def simulate(items: list[dict], rng: random.Random) -> list[dict]:
             else:
                 vx = vy = 0.0
         ball = (bx, by)
+        trail.append(ball)
+        if len(trail) > TRAIL:
+            trail.pop(0)
         x = min(max(bx, PLAY_X0 + PADDLE_W / 2), PLAY_X1 - PADDLE_W / 2)
         return events
 
@@ -176,17 +195,27 @@ def simulate(items: list[dict], rng: random.Random) -> list[dict]:
 
 
 def _build_background(pal) -> Image.Image:
+    """Arena com moldura suave e grade pontilhada sutil no fundo."""
     img = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
     x0, y0 = GRID_X - 8, GRID_Y - 8
     x1, y1 = GRID_X + BRICK_COLS * 112 + (BRICK_COLS - 1) * BRICK_GAP + 8, HEIGHT - 8
     draw.rounded_rectangle((x0, y0, x1, y1), radius=12,
-                           outline=(150, 160, 180, 255), width=1)
+                           outline=(150, 160, 180, 90), width=1)
+    # Grade sutil: pontos a cada célula dão profundidade sem poluir.
+    dot = (150, 160, 180, 26)
+    for gx in range(GRID_X + CELL // 2, WIDTH - GRID_X, CELL):
+        for gy in range(GRID_Y + CELL // 2, HEIGHT - GRID_Y, CELL):
+            draw.point((gx, gy), fill=dot)
     return img
 
 
 def _tint(base: tuple[int, int, int], amount: float) -> tuple[int, int, int]:
     return tuple(int(base[i] + (255 - base[i]) * amount) for i in range(3))
+
+
+def _shade(base: tuple[int, int, int], amount: float) -> tuple[int, int, int]:
+    return tuple(int(base[i] * (1 - amount)) for i in range(3))
 
 
 def _fit_label(draw: ImageDraw.ImageDraw, name: str, font, max_w: int) -> str:
@@ -197,33 +226,76 @@ def _fit_label(draw: ImageDraw.ImageDraw, name: str, font, max_w: int) -> str:
     return name + "…" if name else "…"
 
 
-def _draw_bricks(draw: ImageDraw.ImageDraw, pal, bricks: list[dict],
-                 font, avatars: dict) -> None:
+def _draw_bricks(draw: ImageDraw.ImageDraw, overlay: Image.Image, pal,
+                 bricks: list[dict], font) -> None:
     for b in bricks:
         if not b["alive"]:
             continue
         x0, y0, x1, y1 = b["rect"]
-        color = _tint(pal["primary"], min(0.5, (b["level"] - 1) * 0.14))
-        draw.rounded_rectangle((x0, y0, x1, y1), radius=5, fill=color + (255,),
-                               outline=(255, 255, 255, 170), width=1)
-        label = _fit_label(draw, b["name"], font, x1 - x0 - 10)
+        base = ROW_HUES[b["row"] % len(ROW_HUES)]
+        level = max(1, b.get("level", 1))
+        # Nível mais alto = um toque mais claro no mesmo matiz (sem lavar).
+        color = _tint(base, min(0.18, (level - 1) * 0.05))
+        hp = min(1.0, level / 5)
+        cx = (x0 + x1) / 2
+
+        # Corpo em cápsula com brilho no topo (look arcade).
+        draw.rounded_rectangle((x0, y0, x1, y1), radius=(y1 - y0) // 2,
+                               fill=color + (255,),
+                               outline=(255, 255, 255, 130), width=1)
+        draw.line((x0 + 6, y0 + 3, x1 - 6, y0 + 3),
+                  fill=(255, 255, 255, 90), width=1)
+        # Barrinha de "vida" na base do bloco.
+        if hp < 1.0:
+            bw = int((x1 - x0 - 12) * hp)
+            if bw > 0:
+                draw.line((x0 + 6, y1 - 4, x0 + 6 + bw, y1 - 4),
+                          fill=_shade(base, 0.55) + (220,), width=2)
+
+        label = _fit_label(draw, b["name"], font, x1 - x0 - 12)
         tw = draw.textlength(label, font=font)
-        draw.text(((x0 + x1 - tw) / 2, y0 + (y1 - y0 - 12) / 2), label,
-                  font=font, fill=(255, 255, 255, 235))
+        draw.text((cx - tw / 2, y0 + (y1 - y0 - 10) / 2), label,
+                  font=font, fill=(20, 22, 28, 235) if _luminance(color) > 150
+                  else (255, 255, 255, 240))
 
 
-def _draw_ball(draw: ImageDraw.ImageDraw, pal, ball: tuple[float, float]) -> None:
+def _luminance(rgb: tuple[int, int, int]) -> float:
+    return 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]
+
+
+def _draw_ball(draw: ImageDraw.ImageDraw, overlay: Image.Image, pal,
+               ball: tuple[float, float], trail: list) -> None:
+    # Rastro luminoso: pontos cada vez menores/mais apagados atrás da bolinha.
+    for i, (tx, ty) in enumerate(trail[:-1]):
+        f = (i + 1) / max(1, len(trail))
+        r = BALL_R * f * 0.85
+        a = int(TRAIL_ALPHA * f)
+        draw.ellipse((tx - r, ty - r, tx + r, ty + r),
+                     fill=pal["secondary"][:3] + (a,))
     x, y = ball
+    # Halo suave em volta da bolinha.
+    glow = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
+    ImageDraw.Draw(glow).ellipse(
+        (x - BALL_R * 3, y - BALL_R * 3, x + BALL_R * 3, y + BALL_R * 3),
+        fill=pal["secondary"][:3] + (70,))
+    glow = glow.filter(ImageFilter.GaussianBlur(6))
+    overlay.alpha_composite(glow)
     draw.ellipse((x - BALL_R, y - BALL_R, x + BALL_R, y + BALL_R),
-                 fill=pal["secondary"] + (255,), outline=(255, 255, 255, 200))
+                 fill=(255, 255, 255, 255), outline=pal["secondary"][:3] + (255,))
 
 
 def _draw_paddle(draw: ImageDraw.ImageDraw, pal, paddle_x: float) -> None:
     x0 = paddle_x - PADDLE_W / 2
     y0, y1 = PADDLE_TOP, PADDLE_TOP + PADDLE_H
     rect = (int(x0), y0, int(x0 + PADDLE_W), y1)
-    draw.rounded_rectangle(rect, radius=5, fill=pal["secondary"] + (255,),
-                           outline=(255, 255, 255, 180))
+    draw.rounded_rectangle(rect, radius=PADDLE_H // 2,
+                           fill=pal["secondary"] + (255,),
+                           outline=(255, 255, 255, 200))
+    draw.line((int(x0) + 8, y0 + 3, int(x0 + PADDLE_W) - 8, y0 + 3),
+              fill=(255, 255, 255, 120), width=1)
+    # Base de apoio brilhante sob a raquete.
+    draw.rounded_rectangle((int(x0) + 12, y1 + 2, int(x0 + PADDLE_W) - 12, y1 + 4),
+                           radius=1, fill=pal["primary"][:3] + (90,))
 
 
 def _draw_anims(draw: ImageDraw.ImageDraw, anims: list[dict], font, pal) -> None:
@@ -232,13 +304,24 @@ def _draw_anims(draw: ImageDraw.ImageDraw, anims: list[dict], font, pal) -> None
         t = min(1.0, age / ANIM_FRAMES)
         alpha = int(255 * (1 - t))
         x0, y0, x1, y1 = an["rect"]
-        pad = int(age * 2)
-        draw.rounded_rectangle((x0 - pad, y0 - pad, x1 + pad, y1 + pad), radius=5,
-                               outline=pal["warn"][:3] + (alpha,), width=2)
+        base = ROW_HUES[an["row"] % len(ROW_HUES)]
         cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+        # Explosão em partículas: 8 faíscas radiais que se afastam e apagam.
+        for k in range(8):
+            ang = k * math.pi / 4 + an.get("phase", 0)
+            dist = 4 + age * 2.2
+            px = cx + math.cos(ang) * dist
+            py = cy + math.sin(ang) * dist
+            r = max(0.5, 3.2 * (1 - t))
+            draw.ellipse((px - r, py - r, px + r, py + r),
+                         fill=base + (alpha,))
+        # Anel de choque expandindo.
+        ring = int(6 + age * 3.5)
+        draw.ellipse((cx - ring, cy - ring, cx + ring, cy + ring),
+                     outline=(255, 255, 255, int(alpha * 0.6)), width=2)
         text = f"+{an['gain']}"
         tw = draw.textlength(text, font=font)
-        draw.text((cx - tw / 2, cy - 14 - age * 2), text, font=font,
+        draw.text((cx - tw / 2, cy - 18 - age * 2), text, font=font,
                   fill=pal["accent"][:3] + (alpha,))
 
 
@@ -252,6 +335,10 @@ def render(ctx: RenderContext) -> None:
         items = [{"name": "sem dados", "count": 0, "level": 1}]
 
     background = _build_background(ctx.palette)
+    # Paleta local: no breakout o "secondary" vira um ciano arcade (a bolinha,
+    # a raquete e o score), em vez do verde do tema da cobrinha.
+    pal = dict(ctx.palette)
+    pal["secondary"] = (110, 220, 255)
     states = simulate(items, rng)
     for st in states:
         st["data_name"] = ctx.data_name
@@ -270,23 +357,25 @@ def render(ctx: RenderContext) -> None:
     for k in range(steps):
         a, b = states[k], states[k + 1]
         for ev in b.get("events", []):
-            anims.append({"age": 0, "rect": ev["rect"], "gain": ev["gain"]})
+            anims.append({"age": 0, "rect": ev["rect"], "gain": ev["gain"],
+                          "row": ev.get("row", 0), "phase": (k % 8) * 0.4})
         for s in range(smooth):
             t = s / smooth
             ax, ay = a["ball"]
             bx, by = b["ball"]
             ball = (ax + (bx - ax) * t, ay + (by - ay) * t)
             paddle_x = a["paddle_x"] + (b["paddle_x"] - a["paddle_x"]) * t
+            trail = list(a.get("trail", [])) + [ball]
 
             frame = background.copy()
             overlay = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
             draw = ImageDraw.Draw(overlay)
 
-            _draw_bricks(draw, ctx.palette, b["bricks"], font_xs, ctx.avatars)
-            _draw_ball(draw, ctx.palette, ball)
-            _draw_paddle(draw, ctx.palette, paddle_x)
-            _draw_hud(draw, ctx.palette, a, len(items), font_s, font_l, truncated)
-            _draw_anims(draw, anims, font_l, ctx.palette)
+            _draw_bricks(draw, overlay, pal, b["bricks"], font_xs)
+            _draw_ball(draw, overlay, pal, ball, trail)
+            _draw_paddle(draw, pal, paddle_x)
+            _draw_hud(draw, pal, a, len(items), font_s, font_l, truncated)
+            _draw_anims(draw, anims, font_l, pal)
 
             if a["done"]:
                 msg = "CONCLUÍDO!" if a["finished"] else "TEMPO LIMITE"
@@ -305,10 +394,10 @@ def render(ctx: RenderContext) -> None:
         frame = background.copy()
         overlay = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
         draw = ImageDraw.Draw(overlay)
-        _draw_bricks(draw, ctx.palette, s0["bricks"], font_xs, ctx.avatars)
-        _draw_ball(draw, ctx.palette, s0["ball"])
-        _draw_paddle(draw, ctx.palette, s0["paddle_x"])
-        _draw_hud(draw, ctx.palette, s0, len(items), font_s, font_l, truncated)
+        _draw_bricks(draw, overlay, pal, s0["bricks"], font_xs)
+        _draw_ball(draw, overlay, pal, s0["ball"], list(s0.get("trail", [])))
+        _draw_paddle(draw, pal, s0["paddle_x"])
+        _draw_hud(draw, pal, s0, len(items), font_s, font_l, truncated)
         frames.append(Image.alpha_composite(frame, overlay))
 
     fps = ctx.fps * smooth

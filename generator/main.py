@@ -7,6 +7,8 @@ Uso:
                         [--color HEX] [--food HEX]
                         [--output PATH] [--mock] [--preview]
                         [--smooth|--no-smooth] [--seed N]
+    python -m generator --ascii [--text TEXTO] [--width COLUNAS]
+                        [--color HEX] [--output PATH] [--preview]
 """
 
 from __future__ import annotations
@@ -35,6 +37,21 @@ _HEX_RE = re.compile(r"^#?[0-9a-fA-F]{6}$")
 def _check_hex(value: str | None, flag: str) -> None:
     if value is not None and not _HEX_RE.match(value):
         raise SystemExit(f"{flag} deve ser #rrggbb (ex.: #3fb950); recebido: {value!r}")
+
+
+def _run_ascii(args, username: str) -> int:
+    from . import ascii_art
+    from .palettes import _hex
+
+    text = args.text or ascii_art.DEFAULT_TEXT
+    ink = ascii_art.DEFAULT_INK if not args.color else _hex(args.color) + (255,)
+    ascii_art.render_ascii(
+        text, args.output, ink=ink,
+        fps=24, preview=args.preview, pad_rows=args.pad_rows,
+    )
+    size = os.path.getsize(args.output) / 1024
+    print(f"Banner ASCII gerado em {args.output} ({size:.0f} KB): {text!r}")
+    return 0
 
 
 def _load_items(args, username: str, token: str | None) -> list[dict]:
@@ -73,6 +90,12 @@ def main(argv: list[str] | None = None) -> int:
                         help="usa dados fictícios em vez da API")
     parser.add_argument("--preview", action="store_true",
                         help="salva também um PNG do primeiro frame")
+    parser.add_argument("--ascii", action="store_true",
+                        help="gera um banner ASCII do texto (impressão animada)")
+    parser.add_argument("--text", default=None,
+                        help="texto do banner ASCII (padrão: Lucas Kawatoko)")
+    parser.add_argument("--pad-rows", type=int, default=3,
+                        help="linhas de respiro em cima e embaixo do banner (padrão: 3)")
     parser.add_argument("--smooth", dest="smooth", action="store_true", default=None,
                         help="movimento interpolado (padrão: ligado)")
     parser.add_argument("--no-smooth", dest="smooth", action="store_false",
@@ -85,6 +108,9 @@ def main(argv: list[str] | None = None) -> int:
 
     token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
     username = args.user or os.environ.get("GH_USER") or DEFAULT_USER
+
+    if args.ascii:
+        return _run_ascii(args, username)
 
     items = _load_items(args, username, token)
     if len(items) > MAX_ITEMS:

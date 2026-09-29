@@ -6,7 +6,8 @@ Gera o GIF de um **mini-game** com os seus dados do GitHub (repositórios,
 contribuições ou seguidores): a cobrinha (Snake) comendo os dados ou o
 **Breakout** quebrando blocos. Totalmente personalizável: cor do jogo e da
 comida em qualquer hex, com **fundo transparente** (o GIF se adapta ao tema do
-seu README) e com o seu **avatar na cabeça** da cobrinha. Tudo
+seu README) e com o seu **avatar na cabeça** da cobrinha. Inclui ainda o modo
+**Banner ASCII**, que imprime um texto caractere a caractere. Tudo
 **dentro do GitHub Actions** — sem servidor, sem hosting.
 
 ## Índice
@@ -15,6 +16,7 @@ seu README) e com o seu **avatar na cabeça** da cobrinha. Tudo
 - [Como usar](#como-usar)
 - [Inputs](#inputs)
 - [Avatar e seguidores](#avatar-e-seguidores)
+- [Banner ASCII](#banner-ascii)
 - [Caminho aleatório a cada geração](#caminho-aleatório-a-cada-geração)
 - [Detalhes da animação](#detalhes-da-animação)
 - [Cores personalizadas](#cores-personalizadas)
@@ -106,6 +108,32 @@ Depois é só referenciar no seu README:
 - Com `data: followers`, cada comida é o **avatar de um seguidor** — a cobrinha
   "come" os seus seguidores, e cada um vale 1 ponto. Sem avatar, cai para o
   círculo da cor `food`.
+
+## Banner ASCII
+
+Além dos jogos, o modo `--ascii` transforma um **texto** (o seu nome, por
+exemplo) em um banner de caracteres com efeito de **impressão animada** (linha
+a linha, de cima para baixo), monocromático e com fundo transparente:
+
+```bash
+python -m generator --ascii --text "LUCAS\nKAWATOKO" --color "#c9d1d9"
+```
+
+Na action, use `ascii-printer`:
+
+```yaml
+- name: Generate ASCII banner
+  uses: lucaskawatoko/git-maker/.github/actions/ascii-printer@main
+  with:
+    text: "LUCAS\\nKAWATOKO"   # \n quebra em várias linhas
+    color: "#c9d1d9"           # tinta (hex); vazio usa o padrão claro
+    pad_rows: "3"              # linhas de respiro em cima e embaixo
+    output: imgs/profile-ascii.gif
+```
+
+As letras vêm de uma **fonte ASCII 5×7 desenhada à mão** (traço sólido, sem
+rasterização), então diagonais como A, W e K saem contínuas. Cada linha de
+texto é empilhada com `pad_rows` linhas de respiro.
 
 ## Caminho aleatório a cada geração
 

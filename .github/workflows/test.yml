@@ -49,6 +49,46 @@ jobs:
             --output "/tmp/breakout-ns.gif"
           test -s "/tmp/breakout-ns.gif"
           echo "OK breakout (no-smooth)"
+      - name: Render banner ASCII (padrão)
+        run: |
+          python -m generator --ascii --preview --output "/tmp/ascii.gif"
+          test -s "/tmp/ascii.gif"
+          test -s "/tmp/ascii.png"
+          echo "OK ascii (banner padrão)"
+      - name: Banner ASCII com texto, tinta e respiro custom
+        run: |
+          python -m generator --ascii --text $'LUCAS\nKAWATOKO' \
+            --color "#c9d1d9" --pad-rows 2 \
+            --output "/tmp/ascii-custom.gif"
+          test -s "/tmp/ascii-custom.gif"
+          python - <<'EOF'
+          from PIL import Image
+          im = Image.open("/tmp/ascii-custom.gif")
+          assert im.n_frames > 1, "GIF ASCII deveria ser animado"
+          print("OK ascii custom", im.n_frames, "frames")
+          EOF
+      - name: Fonte ASCII 5x7 desenha as letras e o banner
+        run: |
+          python - <<'EOF'
+          from generator import ascii_art, ascii_font
+
+          # cada glifo tem 7 linhas x 5 colunas e nao esta vazio
+          for ch in "LUCASKAWTO":
+              g = ascii_font.glyph(ch)
+              assert len(g) == ascii_font.HEIGHT, (ch, len(g))
+              assert all(len(r) == ascii_font.WIDTH for r in g), ch
+              assert "1" in "".join(g), f"glifo {ch} vazio"
+
+          one = ascii_art.to_grid("LUCAS")
+          assert len(one) == ascii_font.HEIGHT + 6, "altura com pad_rows"
+
+          two = ascii_art.to_grid("LUCAS\nKAWATOKO")
+          assert len(two) == ascii_font.HEIGHT * 2 + 3 + 6, "altura duas linhas"
+          assert len(two) > len(one), "duas linhas deveriam ocupar mais"
+          assert ascii_art.CHAR in "".join(two), "banner vazio"
+          assert len(set(len(r) for r in two)) == 1, "linhas com larguras diferentes"
+          print("OK fonte 5x7")
+          EOF
       - name: Breakout quebra todas as peças e soma os counts
         run: |
           python - <<'EOF'
@@ -62,6 +102,12 @@ jobs:
           n = sum(1 for s in states for _ in s["events"])
           assert n == len(items), f"um eat por peça, veio {n}"
           assert states[-1]["score"] == sum(i["count"] for i in items), states[-1]["score"]
+          # rastro da bolinha existe e respeita o limite
+          assert states[-1]["trail"], "sem rastro"
+          assert len(states[-1]["trail"]) <= 6, len(states[-1]["trail"])
+          # cada evento carrega a linha (cor da explosão)
+          evs = [e for s in states for e in s["events"]]
+          assert all("row" in e for e in evs), "evento sem row"
           print("OK breakout simulate")
           EOF
       - name: Breakout com seed fixo é reproduzível

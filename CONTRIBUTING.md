@@ -10,6 +10,7 @@ generator/
   api.py             # busca de repos (Search API) / contribuições (GraphQL) / seguidores (REST) + avatares
   palettes.py        # deriva a paleta (jogo, comida) a partir de cores hex
   snake.py           # jogo Snake: cobrinha auto-play (BFS) comendo os dados
+  ascii_art.py       # modo --ascii: banner de texto em caracteres (impressão)
   games/
     __init__.py      # cada jogo expõe render(ctx) e simulate(items, rng)
     breakout.py      # jogo Breakout: bolinha quebra blocos, raquete auto-play
@@ -28,6 +29,11 @@ generator/
   (estourou o teto de passos): o último estado guarda `finished`.
 - O HUD (SCORE + `TOP 25: X/25` + barra de progresso) é o `_draw_hud` do
   `snake.py`, reaproveitado pelo breakout.
+- Visual do breakout: blocos em cápsula coloridos por linha (`ROW_HUES`,
+  vermelho→azul), bolinha branca com **rastro luminoso** (lista `trail` no
+  estado) e halo suave, raquete ciano com brilho, e **explosão em partículas**
+  ao quebrar. O `secondary` local vira ciano (arcade) em vez do verde da cobra;
+  o fundo ganha uma grade pontilhada sutil. A paleta local fica em `render`.
 - A cobrinha **cresce** a cada comida (`pending += 1` no `simulate`). O BFS
   recebe `growing = pending > 0`: enquanto a cobra cresce a cauda não sai na
   jogada, então ela é tratada como célula ocupada — evita planejar caminho que
@@ -65,6 +71,24 @@ generator/
 - `MAX_ITEMS = 25` limita a comida para o GIF ficar leve; quando há mais
   dados, o HUD mostra `TOP 25: X/25` e a CLI avisa na geração.
 
+## Modo ASCII (`--ascii`)
+
+- Renderiza um **texto** como banner de caracteres (`ascii_art.to_grid`) usando
+  a fonte **5×7 desenhada à mão** em `ascii_font.GLYPHS`: cada letra é um traço
+  sólido de 7 linhas × 5 colunas, convertido em **barrinha fina `▏`** ou espaço.
+  Nada de rasterizar uma fonte vetorial em grade — era isso que quebrava as
+  diagonais do A/W/K.
+- `text` aceita `\n` para empilhar várias linhas (ex.: `"LUCAS\nKAWATOKO"`);
+  as linhas são empilhadas com `pad_rows` (padrão 3) linhas vazias de respiro.
+- Para adicionar letras/símbolos, basta incluir o glifo em `ascii_font.GLYPHS`;
+  caracteres sem glifo caem no espaço.
+- A tinta padrão é clara (`#c9d1d9`) para ler no tema escuro.
+- O GIF é uma **impressão animada**: linha a linha, de cima para baixo,
+  terminando com `HOLD_SECONDS` segurando o banner completo.
+- `save_gif_fixed` usa **paleta global fixa** (índice 255 = transparente):
+  quantizar cada frame independente corrompe as cores quando a cor dominante
+  muda (o índice da paleta é reutilizado).
+
 ## Validar
 
 ```bash
@@ -72,6 +96,8 @@ python -m generator --mock --preview
 python -m generator --data followers --mock --preview
 python -m generator --mock --no-smooth --preview
 python -m generator --game breakout --mock --preview
+python -m generator --ascii --preview
+python -m generator --ascii --text "LUCAS\nKAWATOKO" --preview
 ```
 
 Testes de CI (`.github/workflows/test.yml`) renderizam a cobrinha e o breakout

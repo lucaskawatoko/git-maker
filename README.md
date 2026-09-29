@@ -19,6 +19,7 @@ seu README) e com o seu **avatar na cabeça** da cobrinha. Tudo
 - [Detalhes da animação](#detalhes-da-animação)
 - [Cores personalizadas](#cores-personalizadas)
 - [Desenvolvimento local](#desenvolvimento-local)
+- [Contribuindo](#contribuindo)
 - [Licença](#licença)
 
 ## Galeria
@@ -174,6 +175,10 @@ python -m generator --user lucaskawatoko --data followers \
 # breakout quebrando seus repos
 python -m generator --game breakout --mock
 ```
+
+## Contribuindo
+
+Contribuições são bem-vindas — veja o guia em [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Licença
 

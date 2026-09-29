@@ -9,6 +9,18 @@ comida em qualquer hex, com **fundo transparente** (o GIF se adapta ao tema do
 seu README) e com o seu **avatar na cabeça** da cobrinha. Tudo
 **dentro do GitHub Actions** — sem servidor, sem hosting.
 
+## Índice
+
+- [Galeria](#galeria)
+- [Como usar](#como-usar)
+- [Inputs](#inputs)
+- [Avatar e seguidores](#avatar-e-seguidores)
+- [Caminho aleatório a cada geração](#caminho-aleatório-a-cada-geração)
+- [Detalhes da animação](#detalhes-da-animação)
+- [Cores personalizadas](#cores-personalizadas)
+- [Desenvolvimento local](#desenvolvimento-local)
+- [Licença](#licença)
+
 ## Galeria
 
 Exemplos gerados pelo workflow [`samples.yml`](.github/workflows/samples.yml)
